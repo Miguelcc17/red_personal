@@ -1,51 +1,39 @@
 import React, { useState } from 'react';
 import { createPerson } from '../../api/personsApi';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, MapPin, Briefcase, Star, Hash, Building, BookOpen, Target, Scissors } from 'lucide-react';
 
 const PersonForm = ({ onCreated }) => {
   const [formData, setFormData] = useState({
-    nombre: '', apellido: '', edad: 30, genero: '',
-    ciudad: '', pais: '', profesion: '', email: '', telefono: '',
-    descripcion: '', intereses: [],
-    hobbies: [], colores_favoritos: [], signo_zodiacal: '',
-    tiene_tatuajes: false, tatuajes_descripcion: '', historial_trabajos: []
+    nombre: '', apellido: '', fecha_nacimiento: '',
+    signo_zodiacal: '', eneagrama: '', genero: '',
+    ciudad_nacimiento: '', pais_nacimiento: '',
+    ciudad_residencia: '', pais_residencia: '',
+    email: '', telefono: '',
+    profesion: '', rol_actual: '', modelo_trabajo: 'remoto',
+    vision_largo_plazo: '', disciplina_principal: '', mentalidad_competitiva: 'mixto',
+    descripcion: '',
+    hobbies: [], colores_favoritos: [], valores_fundamentales: [],
+    disparadores_estres: [], motivadores: [], soft_skills: [], especializacion: [],
+    idiomas: [], tatuajes: { tiene_tatuajes: false, descripcion: '', estilo: '', significado: '', cantidad: 0 },
+    historial_trabajos: [], educacion: [], metas: []
   });
 
-  const [interestInput, setInterestInput] = useState('');
-  const [colorInput, setColorInput] = useState('');
-  const [hobbyInput, setHobbyInput] = useState({ name: '', active: true });
-  const [jobInput, setJobInput] = useState({ company: '', role: '', period: '' });
+  const [inputState, setInputState] = useState({ hobby: '', skill: '', spec: '', lang: '', langLevel: 'B1', value: '', stress: '', motiv: '', color: '' });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
-  };
-
-  const addInterest = () => {
-    if (interestInput.trim()) {
-      setFormData({ ...formData, intereses: [...formData.intereses, interestInput.trim()] });
-      setInterestInput('');
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData({ ...formData, [parent]: { ...formData[parent], [child]: type === 'checkbox' ? checked : value } });
+    } else {
+      setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
     }
   };
 
-  const addColor = () => {
-    if (colorInput.trim()) {
-      setFormData({ ...formData, colores_favoritos: [...formData.colores_favoritos, colorInput.trim()] });
-      setColorInput('');
-    }
-  };
-
-  const addHobby = () => {
-    if (hobbyInput.name.trim()) {
-      setFormData({ ...formData, hobbies: [...formData.hobbies, hobbyInput] });
-      setHobbyInput({ name: '', active: true });
-    }
-  };
-
-  const addJob = () => {
-    if (jobInput.company.trim()) {
-      setFormData({ ...formData, historial_trabajos: [...formData.historial_trabajos, jobInput] });
-      setJobInput({ company: '', role: '', period: '' });
+  const addItem = (field, value, extras = {}) => {
+    if (value.trim()) {
+      setFormData({ ...formData, [field]: [...formData[field], typeof value === 'string' ? (Object.keys(extras).length ? { nombre: value, ...extras } : value) : value] });
+      setInputState({ ...inputState, [field]: '' });
     }
   };
 
@@ -66,132 +54,143 @@ const PersonForm = ({ onCreated }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl border border-gray-100 shadow-xl mb-12">
-      <h3 className="text-xl font-bold text-gray-800 border-b pb-2">Información Básica</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Nombre</label>
-          <input name="nombre" value={formData.nombre} onChange={handleChange} required className="w-full border p-2 rounded-lg" />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Apellido</label>
-          <input name="apellido" value={formData.apellido} onChange={handleChange} required className="w-full border p-2 rounded-lg" />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Edad</label>
-          <input name="edad" type="number" value={formData.edad} onChange={handleChange} required className="w-full border p-2 rounded-lg" />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Género</label>
-          <input name="genero" value={formData.genero} onChange={handleChange} className="w-full border p-2 rounded-lg" placeholder="Opcional" />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Profesión</label>
-          <input name="profesion" value={formData.profesion} onChange={handleChange} required className="w-full border p-2 rounded-lg" />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Signo Zodiacal</label>
-          <input name="signo_zodiacal" value={formData.signo_zodiacal} onChange={handleChange} className="w-full border p-2 rounded-lg" />
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-8 bg-white p-10 rounded-3xl border border-gray-100 shadow-2xl mb-16 max-w-6xl mx-auto">
+      <div className="border-b pb-4">
+        <h2 className="text-3xl font-extrabold text-gray-900">Análisis de Perfil Avanzado</h2>
+        <p className="text-gray-500 mt-1">Modelado de grafo completo para análisis profundo de comportamiento y trayectoria.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
-          <input name="email" type="email" value={formData.email} onChange={handleChange} required className="w-full border p-2 rounded-lg" />
+      {/* Sección 1: Identidad Base */}
+      <section className="space-y-6">
+        <div className="flex items-center space-x-2 text-indigo-600 font-bold uppercase tracking-widest text-sm">
+          <Hash size={18}/> <span>Identidad Base</span>
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Teléfono</label>
-          <input name="telefono" value={formData.telefono} onChange={handleChange} required className="w-full border p-2 rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <input name="nombre" placeholder="Nombre" onChange={handleChange} required className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input name="apellido" placeholder="Apellido" onChange={handleChange} required className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input name="fecha_nacimiento" type="date" onChange={handleChange} className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input name="telefono" placeholder="Teléfono" onChange={handleChange} required className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <select name="genero" onChange={handleChange} className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="">Género...</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="No binario">No binario</option>
+            <option value="Otro">Otro</option>
+          </select>
         </div>
-      </div>
+      </section>
 
-      <h3 className="text-xl font-bold text-gray-800 border-b pb-2 pt-4">Análisis de Perfil</h3>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Hobbies Section */}
-        <div className="space-y-3">
-          <label className="text-xs font-bold text-gray-500 uppercase">Hobbies & Historial</label>
-          <div className="flex space-x-2">
-            <input value={hobbyInput.name} onChange={(e) => setHobbyInput({...hobbyInput, name: e.target.value})} placeholder="Nombre del hobby" className="flex-1 border p-2 rounded-lg text-sm" />
-            <label className="flex items-center text-xs space-x-1">
-              <input type="checkbox" checked={hobbyInput.active} onChange={(e) => setHobbyInput({...hobbyInput, active: e.target.checked})} />
-              <span>Activo</span>
-            </label>
-            <button type="button" onClick={addHobby} className="bg-indigo-500 text-white p-2 rounded-lg"><Plus size={16}/></button>
+      {/* Sección 2: Ubicación y Origen */}
+      <section className="space-y-6">
+        <div className="flex items-center space-x-2 text-indigo-600 font-bold uppercase tracking-widest text-sm">
+          <MapPin size={18}/> <span>Ubicación e Historia</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="p-6 bg-gray-50 rounded-2xl space-y-4">
+            <p className="text-xs font-bold text-gray-400 uppercase">Origen (BORN_IN)</p>
+            <div className="grid grid-cols-2 gap-4">
+              <input name="ciudad_nacimiento" placeholder="Ciudad" onChange={handleChange} className="bg-white border p-2 rounded-lg text-sm" />
+              <input name="pais_nacimiento" placeholder="País" onChange={handleChange} className="bg-white border p-2 rounded-lg text-sm" />
+            </div>
           </div>
-          <div className="space-y-2">
-            {formData.hobbies.map((h, i) => (
-              <div key={i} className="flex justify-between items-center bg-gray-50 p-2 rounded text-sm">
-                <span>{h.name} {h.active ? '✅' : '📜'}</span>
-                <button type="button" onClick={() => removeItem('hobbies', i)} className="text-red-400"><Trash2 size={14}/></button>
-              </div>
-            ))}
+          <div className="p-6 bg-gray-50 rounded-2xl space-y-4">
+            <p className="text-xs font-bold text-gray-400 uppercase">Residencia (LIVES_IN)</p>
+            <div className="grid grid-cols-2 gap-4">
+              <input name="ciudad_residencia" placeholder="Ciudad" onChange={handleChange} className="bg-white border p-2 rounded-lg text-sm" />
+              <input name="pais_residencia" placeholder="País" onChange={handleChange} className="bg-white border p-2 rounded-lg text-sm" />
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Colors & Interests */}
-        <div className="space-y-4">
+      {/* Sección 3: Perfil Profesional */}
+      <section className="space-y-6">
+        <div className="flex items-center space-x-2 text-indigo-600 font-bold uppercase tracking-widest text-sm">
+          <Briefcase size={18}/> <span>Perfil Profesional (WORKS_AS)</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <input name="profesion" placeholder="Profesión (Ej: Full Stack Dev)" onChange={handleChange} className="border p-3 rounded-xl outline-none" />
+          <input name="rol_actual" placeholder="Rol Actual" onChange={handleChange} className="border p-3 rounded-xl outline-none" />
+          <select name="modelo_trabajo" onChange={handleChange} className="border p-3 rounded-xl outline-none">
+            <option value="remoto">Remoto</option>
+            <option value="presencial">Presencial</option>
+            <option value="hibrido">Híbrido</option>
+            <option value="freelance">Freelance</option>
+          </select>
+        </div>
+        <textarea name="vision_largo_plazo" placeholder="Visión a largo plazo..." onChange={handleChange} className="w-full border p-4 rounded-2xl h-24" />
+      </section>
+
+      {/* Sección 4: Análisis Psicológico y Conductual */}
+      <section className="space-y-6">
+        <div className="flex items-center space-x-2 text-indigo-600 font-bold uppercase tracking-widest text-sm">
+          <Star size={18}/> <span>Análisis Psicológico y Simbólico</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <input name="signo_zodiacal" placeholder="Signo Zodiacal" onChange={handleChange} className="border p-3 rounded-xl" />
+          <input name="eneagrama" placeholder="Eneagrama (Ej: 5w6)" onChange={handleChange} className="border p-3 rounded-xl" />
+          <select name="mentalidad_competitiva" onChange={handleChange} className="border p-3 rounded-xl">
+            <option value="mixto">Mentalidad Mixta</option>
+            <option value="competitivo">Competitivo</option>
+            <option value="cooperativo">Cooperativo</option>
+          </select>
+        </div>
+
+        {/* Arrays Dinámicos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase">Colores Favoritos</label>
+            <label className="text-xs font-bold text-gray-500 uppercase">Valores Fundamentales</label>
             <div className="flex space-x-2">
-              <input value={colorInput} onChange={(e) => setColorInput(e.target.value)} className="flex-1 border p-2 rounded-lg text-sm" />
-              <button type="button" onClick={addColor} className="bg-indigo-500 text-white p-2 rounded-lg"><Plus size={16}/></button>
+              <input value={inputState.value} onChange={(e)=>setInputState({...inputState, value: e.target.value})} className="flex-1 border p-2 rounded-lg text-sm" />
+              <button type="button" onClick={()=>addItem('valores_fundamentales', inputState.value)} className="bg-indigo-500 text-white p-2 rounded-lg"><Plus size={16}/></button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {formData.colores_favoritos.map((c, i) => (
-                <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center space-x-1">
-                  <span>{c}</span>
-                  <button type="button" onClick={() => removeItem('colores_favoritos', i)} className="text-gray-400">&times;</button>
+              {formData.valores_fundamentales.map((v, i) => (
+                <span key={i} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs flex items-center space-x-1">
+                  <span>{v}</span>
+                  <button type="button" onClick={()=>removeItem('valores_fundamentales', i)} className="ml-1 opacity-50 hover:opacity-100">&times;</button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase">Motivadores</label>
+            <div className="flex space-x-2">
+              <input value={inputState.motiv} onChange={(e)=>setInputState({...inputState, motiv: e.target.value})} className="flex-1 border p-2 rounded-lg text-sm" />
+              <button type="button" onClick={()=>addItem('motivadores', inputState.motiv)} className="bg-indigo-500 text-white p-2 rounded-lg"><Plus size={16}/></button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.motivadores.map((v, i) => (
+                <span key={i} className="bg-green-50 text-green-700 px-2 py-1 rounded text-xs flex items-center space-x-1">
+                  <span>{v}</span>
+                  <button type="button" onClick={()=>removeItem('motivadores', i)} className="ml-1 opacity-50 hover:opacity-100">&times;</button>
                 </span>
               ))}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-4 pt-4">
-        <label className="text-xs font-bold text-gray-500 uppercase">Historial de Trabajos</label>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input placeholder="Empresa" value={jobInput.company} onChange={(e) => setJobInput({...jobInput, company: e.target.value})} className="border p-2 rounded-lg text-sm" />
-          <input placeholder="Cargo" value={jobInput.role} onChange={(e) => setJobInput({...jobInput, role: e.target.value})} className="border p-2 rounded-lg text-sm" />
-          <input placeholder="Periodo" value={jobInput.period} onChange={(e) => setJobInput({...jobInput, period: e.target.value})} className="border p-2 rounded-lg text-sm" />
-          <button type="button" onClick={addJob} className="bg-indigo-500 text-white p-2 rounded-lg flex items-center justify-center space-x-2">
-            <Plus size={16}/> <span>Añadir</span>
-          </button>
+      {/* Sección 5: Historiales Temporales */}
+      <section className="space-y-8 pt-8 border-t">
+        <div className="flex items-center space-x-2 text-indigo-600 font-bold uppercase tracking-widest text-sm">
+          <Building size={18}/> <span>Historial Profesional y Educación</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {formData.historial_trabajos.map((j, i) => (
-            <div key={i} className="bg-indigo-50 p-3 rounded-lg flex justify-between items-center text-sm border border-indigo-100">
-              <div>
-                <p className="font-bold">{j.company}</p>
-                <p className="text-xs text-indigo-600">{j.role} | {j.period}</p>
-              </div>
-              <button type="button" onClick={() => removeItem('historial_trabajos', i)} className="text-red-400"><Trash2 size={16}/></button>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-        <div className="space-y-4">
-          <label className="flex items-center space-x-3 cursor-pointer">
-            <input type="checkbox" name="tiene_tatuajes" checked={formData.tiene_tatuajes} onChange={handleChange} className="w-5 h-5 rounded" />
-            <span className="font-bold text-gray-700">¿Tiene tatuajes?</span>
-          </label>
-          {formData.tiene_tatuajes && (
-            <textarea name="tatuajes_descripcion" value={formData.tatuajes_descripcion} onChange={handleChange} placeholder="Describe los tatuajes..." className="w-full border p-3 rounded-xl h-24 text-sm" />
-          )}
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Descripción General</label>
-          <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="w-full border p-3 rounded-xl h-32 text-sm" />
-        </div>
-      </div>
+        {/* Aquí se añadirían subformularios complejos para WorkExperience y Education */}
+        <p className="text-sm text-gray-500 italic bg-amber-50 p-4 rounded-xl border border-amber-100">
+          Nota: Los historiales se gestionan con sus propios nodos y propiedades temporales (desde/hasta).
+          Para efectos de este prototipo, se asume el llenado de los campos definidos en el schema.
+        </p>
+      </section>
 
-      <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-        Crear Perfil de Análisis
-      </button>
+      <div className="pt-8">
+        <button type="submit" className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-200 uppercase tracking-widest">
+          Generar Perfil de Grafo
+        </button>
+      </div>
     </form>
   );
 };
