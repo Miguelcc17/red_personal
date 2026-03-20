@@ -5,7 +5,7 @@ class PersonSchema(Schema):
     nombre = fields.Str(required=True, validate=validate.Length(min=1))
     apellido = fields.Str(required=True, validate=validate.Length(min=1))
     edad = fields.Int(required=True, validate=validate.Range(min=0))
-    genero = fields.Str(required=True)
+    genero = fields.Str(allow_none=True)
     ciudad = fields.Str(required=True)
     pais = fields.Str(required=True)
     profesion = fields.Str(required=True)
@@ -13,6 +13,15 @@ class PersonSchema(Schema):
     telefono = fields.Str(required=True)
     descripcion = fields.Str()
     intereses = fields.List(fields.Str())
+
+    # Nuevos campos para análisis detallado
+    hobbies = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()), allow_none=True)
+    colores_favoritos = fields.List(fields.Str(), allow_none=True)
+    signo_zodiacal = fields.Str(allow_none=True)
+    tiene_tatuajes = fields.Bool(allow_none=True)
+    tatuajes_descripcion = fields.Str(allow_none=True)
+    historial_trabajos = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()), allow_none=True)
+
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
 

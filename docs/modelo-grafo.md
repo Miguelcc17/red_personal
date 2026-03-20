@@ -6,12 +6,21 @@ Propiedades:
 - `id` (string): Identificador único (UUID).
 - `nombre`, `apellido` (string): Nombres.
 - `edad` (integer): Edad de la persona.
-- `genero` (string): Género.
+- `genero` (string): Género (opcional).
 - `ciudad`, `pais` (string): Ubicación.
 - `profesion` (string): Cargo o profesión.
 - `email`, `telefono` (string): Contacto.
 - `descripcion` (string): Resumen biográfico.
 - `intereses` (list<string>): Lista de intereses.
+
+### Campos de Análisis Detallado
+- `hobbies` (JSON string/list): Lista de objetos con `name` y `active` (booleano).
+- `colores_favoritos` (list<string>): Lista de colores.
+- `signo_zodiacal` (string): Signo del zodiaco.
+- `tiene_tatuajes` (boolean): Si posee tatuajes.
+- `tatuajes_descripcion` (string): Detalle de los tatuajes.
+- `historial_trabajos` (JSON string/list): Lista de objetos con `company`, `role` y `period`.
+
 - `created_at`, `updated_at` (datetime): Fechas de sistema.
 
 ## Relaciones: RELATED_TO
@@ -23,13 +32,3 @@ Propiedades:
 - `nivel_confianza` (integer): Escala de 1 a 5.
 - `fecha_inicio` (string): Fecha en que se conocieron.
 - `created_at`, `updated_at` (datetime): Fechas de sistema.
-
-## Ejemplos de Consultas Cypher
-- Listar todas las personas:
-  `MATCH (p:Person) RETURN p`
-- Crear una persona:
-  `CREATE (p:Person {id: '1', nombre: 'Juan', ...}) RETURN p`
-- Crear relación entre Juan y Maria:
-  `MATCH (p1:Person {id: '1'}), (p2:Person {id: '2'}) CREATE (p1)-[r:RELATED_TO {tipo_relacion: 'amigo'}]->(p2) RETURN r`
-- Obtener el grafo completo para visualización:
-  `MATCH (p1:Person)-[r:RELATED_TO]->(p2:Person) RETURN p1, r, p2`
