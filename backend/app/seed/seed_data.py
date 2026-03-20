@@ -1,10 +1,15 @@
 import sys
 import os
-from datetime import datetime, date
-import uuid
+from datetime import date
 
-# Add the parent directory to sys.path to import from app
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the project root to sys.path
+# This script is located in backend/app/seed/seed_data.py
+# The 'app' package is in backend/app
+# We want to be able to do 'from app.services...'
+# So we need to add 'backend' directory to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "..")) # backend/
+sys.path.append(backend_dir)
 
 from app import create_app
 from app.services.person_service import person_service
