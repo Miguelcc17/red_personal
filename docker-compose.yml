@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   neo4j:
     image: neo4j:5
@@ -8,8 +6,8 @@ services:
     ports:
       - "7474:7474"
       - "7687:7687"
-    environment:
-      - NEO4J_AUTH=neo4j/password
+    env_file:
+      - .env
     volumes:
       - neo4j_data:/data
     networks:
@@ -22,7 +20,7 @@ services:
     ports:
       - "5000:5000"
     env_file:
-      - ./backend/.env
+      - .env
     depends_on:
       - neo4j
     networks:
