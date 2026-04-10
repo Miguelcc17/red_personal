@@ -6,12 +6,11 @@ class GraphRepository:
 
     def get_full_graph(self):
         with self.conn.get_session() as session:
-            # Match all relevant nodes and relationships
-            # For simplicity, we just return everything to the UI
+            # elementId() is the correct way to get a unique identifier in Neo4j 5.x
             query = """
             MATCH (n)
             OPTIONAL MATCH (n)-[r]->(m)
-            RETURN collect(distinct n) as nodes, collect(distinct {source: id(n), target: id(m), label: type(r), props: properties(r)}) as links
+            RETURN collect(distinct n) as nodes, collect(distinct {source: elementId(n), target: elementId(m), label: type(r), props: properties(r)}) as links
             """
             result = session.run(query)
             record = result.single()
@@ -19,7 +18,6 @@ class GraphRepository:
             nodes = []
             for node in record['nodes']:
                 label = ""
-                # Get the most descriptive property as label
                 if 'nombre_completo' in node: label = node['nombre_completo']
                 elif 'nombre' in node: label = node['nombre']
                 elif 'empresa' in node: label = node['empresa']
@@ -27,8 +25,48 @@ class GraphRepository:
                 elif 'titulo' in node: label = node['titulo']
                 elif 'descripcion' in node: label = node['descripcion']
 
+                # We use element_id as the primary id for visualization
                 nodes.append({
-                    "id": str(node.id),
+                    "id": node.element_id,
+                    "label": label or str(node.element_id),
+                    "group": list(node.labels)[0] if node.labels else "Unknown",
+                    "properties": dict(node)
+                })
+
+            links = []
+            for link in record['links']:
+                if link['target'] is not None:
+                    links.append({
+                        "id": f"{link['source']}-{link['target']}-{link['label']}",
+                        "source": link['source'],
+                        "target": link['target'],
+                        "label": link['label'],
+                        "properties": link['props']
+                    })
+
+            return {"nodes": nodes, "links": links}
+
+    def get_graph_by_person(self, person_id):
+        # Starts from a person and expands to all neighbors within 2 hops for a good "local" view
+        with self.conn.get_session() as session:
+            query = """
+            MATCH (p:Person {id: $pid})
+            OPTIONAL MATCH path = (p)-[*1..2]-(m)
+            WITH p, collect(distinct m) + p as all_nodes
+            UNWIND all_nodes as n
+            OPTIONAL MATCH (n)-[r]->(m) WHERE m in all_nodes
+            RETURN collect(distinct n) as nodes, collect(distinct {source: elementId(n), target: elementId(m), label: type(r), props: properties(r)}) as links
+            """
+            result = session.run(query, pid=person_id)
+            record = result.single()
+            if not record or not record['nodes']:
+                return {"nodes": [], "links": []}
+
+            nodes = []
+            for node in record['nodes']:
+                label = node.get('nombre_completo') or node.get('nombre') or list(node.labels)[0]
+                nodes.append({
+                    "id": node.element_id,
                     "label": label,
                     "group": list(node.labels)[0] if node.labels else "Unknown",
                     "properties": dict(node)
@@ -39,26 +77,10 @@ class GraphRepository:
                 if link['target'] is not None:
                     links.append({
                         "id": f"{link['source']}-{link['target']}-{link['label']}",
-                        "source": str(link['source']),
-                        "target": str(link['target']),
+                        "source": link['source'],
+                        "target": link['target'],
                         "label": link['label'],
                         "properties": link['props']
                     })
 
             return {"nodes": nodes, "links": links}
-
-    def get_graph_by_person(self, person_id):
-        # Implementation similar to get_full_graph but starting from a Person node
-        with self.conn.get_session() as session:
-            query = """
-            MATCH (p:Person {id: $pid})
-            OPTIONAL MATCH (p)-[r]-(m)
-            RETURN p, collect(distinct m) as neighbors, collect(distinct r) as relationships
-            """
-            result = session.run(query, pid=person_id)
-            record = result.single()
-            if not record: return {"nodes": [], "links": []}
-
-            nodes = []
-            # ... process nodes and links ... (same logic as get_full_graph)
-            return self.get_full_graph() # For now, just return all as it's easier to view the network

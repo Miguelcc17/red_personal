@@ -6,17 +6,12 @@ class PersonRepository:
     def __init__(self):
         self.conn = neo4j_conn
 
-    def _serialize_date(self, obj):
-        if isinstance(obj, (date, datetime)):
-            return obj.isoformat()
-        return obj
-
     def create(self, data):
         data['id'] = str(uuid.uuid4())
         data['created_at'] = datetime.utcnow().isoformat()
         data['updated_at'] = data['created_at']
 
-        # Extract related data to create nodes/relationships
+        # Extract related data
         hobbies = data.pop('hobbies', [])
         idiomas = data.pop('idiomas', [])
         historial_trabajos = data.pop('historial_trabajos', [])
@@ -24,136 +19,94 @@ class PersonRepository:
         metas = data.pop('metas', [])
         tatuajes = data.pop('tatuajes', None)
 
-        # Location names
         ciudad_nacimiento = data.pop('ciudad_nacimiento', None)
         pais_nacimiento = data.pop('pais_nacimiento', None)
         ciudad_residencia = data.pop('ciudad_residencia', None)
         pais_residencia = data.pop('pais_residencia', None)
 
-        # Simple related entities
         profesion_nombre = data.pop('profesion', None)
         genero_nombre = data.pop('genero', None)
 
         with self.conn.get_session() as session:
             # 1. Create Person node
             props = ", ".join([f"{k}: ${k}" for k in data.keys()])
-            result = session.run(
-                f"CREATE (p:Person {{ {props} }}) RETURN p",
-                **data
-            )
-            person_node = result.single()['p']
-            person_id = person_node['id']
+            result = session.run(f"CREATE (p:Person {{ {props} }}) RETURN p", **data)
+            person_id = result.single()['p']['id']
 
-            # 2. Handle simple related nodes (MERGE)
+            # Helper for merging and relating
+            def relate(query, **kwargs):
+                session.run(query, pid=person_id, **kwargs)
+
             if genero_nombre:
-                session.run("MATCH (p:Person {id: $pid}) MERGE (g:Gender {nombre: $nombre}) MERGE (p)-[:HAS_GENDER]->(g)", pid=person_id, nombre=genero_nombre)
+                relate("MATCH (p:Person {id: $pid}) MERGE (g:Gender {nombre: $nombre}) MERGE (p)-[:HAS_GENDER]->(g)", nombre=genero_nombre)
             if profesion_nombre:
-                session.run("MATCH (p:Person {id: $pid}) MERGE (pr:Profession {nombre: $nombre}) MERGE (p)-[:WORKS_AS]->(pr)", pid=person_id, nombre=profesion_nombre)
+                relate("MATCH (p:Person {id: $pid}) MERGE (pr:Profession {nombre: $nombre}) MERGE (p)-[:WORKS_AS]->(pr)", nombre=profesion_nombre)
 
-            # 3. Handle Locations
             if ciudad_nacimiento and pais_nacimiento:
-                session.run("""
+                relate("""
                     MATCH (p:Person {id: $pid})
                     MERGE (c:Country {nombre: $pais})
                     MERGE (ct:City {nombre: $ciudad})
                     MERGE (ct)-[:IN_COUNTRY]->(c)
                     MERGE (p)-[:BORN_IN]->(ct)
-                """, pid=person_id, pais=pais_nacimiento, ciudad=ciudad_nacimiento)
+                """, pais=pais_nacimiento, ciudad=ciudad_nacimiento)
 
             if ciudad_residencia and pais_residencia:
-                session.run("""
+                relate("""
                     MATCH (p:Person {id: $pid})
                     MERGE (c:Country {nombre: $pais})
                     MERGE (ct:City {nombre: $ciudad})
                     MERGE (ct)-[:IN_COUNTRY]->(c)
                     MERGE (p)-[:LIVES_IN]->(ct)
-                """, pid=person_id, pais=pais_residencia, ciudad=ciudad_residencia)
+                """, pais=pais_residencia, ciudad=ciudad_residencia)
 
-            # 4. Handle Hobbies
-            for hobby in hobbies:
-                session.run("""
-                    MATCH (p:Person {id: $pid})
-                    MERGE (h:Hobby {nombre: $nombre})
-                    MERGE (p)-[:ENJOYS {active: $active, categoria: $categoria, descripcion: $descripcion}]->(h)
-                """, pid=person_id, nombre=hobby['nombre'], active=hobby.get('active', True), categoria=hobby.get('categoria'), descripcion=hobby.get('descripcion'))
+            for h in hobbies:
+                relate("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active, categoria: $categoria, descripcion: $descripcion}]->(x)",
+                       nombre=h['nombre'], active=h.get('active', True), categoria=h.get('categoria'), descripcion=h.get('descripcion'))
 
-            # 5. Handle Languages
-            for lang in idiomas:
-                session.run("""
-                    MATCH (p:Person {id: $pid})
-                    MERGE (l:Language {nombre: $nombre})
-                    MERGE (p)-[:SPEAKS {nivel: $nivel}]->(l)
-                """, pid=person_id, nombre=lang['nombre'], nivel=lang.get('nivel'))
+            for l in idiomas:
+                relate("MATCH (p:Person {id: $pid}) MERGE (x:Language {nombre: $nombre}) MERGE (p)-[:SPEAKS {nivel: $nivel}]->(x)",
+                       nombre=l['nombre'], nivel=l.get('nivel'))
 
-            # 6. Handle Work Experience
-            for job in historial_trabajos:
-                session.run("""
-                    MATCH (p:Person {id: $pid})
-                    MERGE (c:Company {nombre: $empresa})
-                    CREATE (p)-[:WORKED_AT {
-                        cargo: $cargo,
-                        desde: $desde,
-                        hasta: $hasta,
-                        actual: $actual,
-                        modalidad: $modalidad,
-                        descripcion: $descripcion,
-                        industria: $industria
-                    }]->(c)
-                """, pid=person_id, **job)
+            for j in historial_trabajos:
+                relate("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta, actual: $actual, modalidad: $modalidad, descripcion: $descripcion, industria: $industria}]->(c)", **j)
 
-            # 7. Handle Education
-            for edu in educacion:
-                session.run("""
-                    MATCH (p:Person {id: $pid})
-                    MERGE (i:Institution {nombre: $institucion})
-                    CREATE (p)-[:STUDIED_AT {
-                        titulo: $titulo,
-                        area: $area,
-                        desde: $desde,
-                        hasta: $hasta,
-                        actual: $actual
-                    }]->(i)
-                """, pid=person_id, **edu)
+            for e in educacion:
+                relate("MATCH (p:Person {id: $pid}) MERGE (i:Institution {nombre: $institucion}) CREATE (p)-[:STUDIED_AT {titulo: $titulo, area: $area, desde: $desde, hasta: $hasta, actual: $actual}]->(i)", **e)
 
-            # 8. Handle Goals
-            for goal in metas:
-                session.run("""
-                    MATCH (p:Person {id: $pid})
-                    CREATE (g:Goal {
-                        tipo: $tipo,
-                        descripcion: $descripcion,
-                        desde: $desde,
-                        hasta: $hasta,
-                        estado: $estado
-                    })
-                    CREATE (p)-[:HAS_GOAL]->(g)
-                """, pid=person_id, **goal)
+            for g in metas:
+                relate("MATCH (p:Person {id: $pid}) CREATE (x:Goal {tipo: $tipo, descripcion: $descripcion, desde: $desde, hasta: $hasta, estado: $estado}) CREATE (p)-[:HAS_GOAL]->(x)", **g)
 
-            # 9. Handle Tattoos
             if tatuajes and tatuajes.get('tiene_tatuajes'):
-                session.run("""
-                    MATCH (p:Person {id: $pid})
-                    CREATE (t:Tattoo {
-                        descripcion: $descripcion,
-                        estilo: $estilo,
-                        significado: $significado,
-                        cantidad: $cantidad
-                    })
-                    CREATE (p)-[:HAS_TATTOO]->(t)
-                """, pid=person_id, **tatuajes)
+                relate("MATCH (p:Person {id: $pid}) CREATE (x:Tattoo {descripcion: $descripcion, estilo: $estilo, significado: $significado, cantidad: $cantidad}) CREATE (p)-[:HAS_TATTOO]->(x)", **tatuajes)
 
             return self.get_by_id(person_id)
 
     def get_all(self):
-        # This becomes more complex as we need to aggregate related data
-        # For listing, we might just return basic person info
         with self.conn.get_session() as session:
-            result = session.run("MATCH (p:Person) RETURN p ORDER BY p.nombre ASC")
-            return [dict(record['p']) for record in result]
+            # Enhanced get_all to fetch essential metadata for the list view
+            query = """
+            MATCH (p:Person)
+            OPTIONAL MATCH (p)-[:HAS_GENDER]->(g:Gender)
+            OPTIONAL MATCH (p)-[:WORKS_AS]->(pr:Profession)
+            OPTIONAL MATCH (p)-[:LIVES_IN]->(rc:City)-[:IN_COUNTRY]->(rco:Country)
+            RETURN p, g.nombre as genero, pr.nombre as profesion,
+                   rc.nombre as ciudad_residencia, rco.nombre as pais_residencia
+            ORDER BY p.nombre ASC
+            """
+            result = session.run(query)
+            persons = []
+            for record in result:
+                data = dict(record['p'])
+                data['genero'] = record['genero']
+                data['profesion'] = record['profesion']
+                data['ciudad_residencia'] = record['ciudad_residencia']
+                data['pais_residencia'] = record['pais_residencia']
+                persons.append(data)
+            return persons
 
     def get_by_id(self, person_id):
         with self.conn.get_session() as session:
-            # Complex query to get person and all related nodes/relationships
             query = """
             MATCH (p:Person {id: $pid})
             OPTIONAL MATCH (p)-[:HAS_GENDER]->(g:Gender)
@@ -198,30 +151,15 @@ class PersonRepository:
             return data
 
     def update(self, person_id, data):
-        # For simplicity in this project, we delete and recreate relationships on update
-        # or just update simple properties. Real world would be more granular.
         with self.conn.get_session() as session:
-            # 1. Update simple properties on Person node
-            props_to_set = {k: v for k, v in data.items() if isinstance(v, (str, int, float, bool, list)) and k not in ['id', 'hobbies', 'idiomas', 'historial_trabajos', 'educacion', 'metas', 'tatuajes']}
-            if props_to_set:
-                props_to_set['id'] = person_id
-                props_to_set['updated_at'] = datetime.utcnow().isoformat()
-                set_clause = ", ".join([f"p.{k} = ${k}" for k in props_to_set.keys() if k != 'id'])
-                session.run(f"MATCH (p:Person {{id: $id}}) SET {set_clause}", **props_to_set)
-
-            # Implementation of full update for all related nodes is omitted for brevity,
-            # but would follow similar logic to create() but with initial DETACHing of old specific relations.
-
+            data['id'] = person_id
+            data['updated_at'] = datetime.utcnow().isoformat()
+            set_clause = ", ".join([f"p.{k} = ${k}" for k in data.keys() if k != 'id' and not isinstance(data[k], (list, dict))])
+            if set_clause:
+                session.run(f"MATCH (p:Person {{id: $id}}) SET {set_clause}", **data)
             return self.get_by_id(person_id)
 
     def delete(self, person_id):
         with self.conn.get_session() as session:
-            # Delete Person and their unique nodes (Goals, Tattoos)
-            # Shared nodes (City, Country, Profession) stay.
-            session.run("""
-                MATCH (p:Person {id: $pid})
-                OPTIONAL MATCH (p)-[:HAS_GOAL]->(g:Goal)
-                OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t:Tattoo)
-                DETACH DELETE p, g, t
-            """, pid=person_id)
+            session.run("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[:HAS_GOAL]->(g:Goal) OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t:Tattoo) DETACH DELETE p, g, t", pid=person_id)
             return True

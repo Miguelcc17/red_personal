@@ -22,7 +22,7 @@ services:
     ports:
       - "5000:5000"
     env_file:
-      - ./backend/.env.example
+      - ./backend/.env
     depends_on:
       - neo4j
     networks:

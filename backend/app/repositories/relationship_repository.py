@@ -1,5 +1,5 @@
 from .neo4j_connection import neo4j_conn
-from datetime import datetime
+from datetime import datetime, date
 import uuid
 
 class RelationshipRepository:
@@ -11,6 +11,7 @@ class RelationshipRepository:
         data['created_at'] = datetime.utcnow().isoformat()
         data['updated_at'] = data['created_at']
 
+        # Ensure 'desde' is used consistently
         with self.conn.get_session() as session:
             result = session.run(
                 """
@@ -20,7 +21,7 @@ class RelationshipRepository:
                     tipo_relacion: $tipo_relacion,
                     descripcion: $descripcion,
                     nivel_confianza: $nivel_confianza,
-                    fecha_inicio: $fecha_inicio,
+                    desde: $desde,
                     created_at: $created_at,
                     updated_at: $updated_at
                 }]->(p2)

@@ -1,44 +1,49 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Briefcase } from 'lucide-react';
+import { Mail, Phone, MapPin, Trash2 } from 'lucide-react';
 
 const PersonCard = ({ person, onDelete }) => {
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white border border-gray-100 rounded-[2rem] p-6 hover:shadow-2xl hover:shadow-indigo-50 transition-all group relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110" />
+
+      <div className="flex justify-between items-start mb-6 relative">
         <div>
-          <h3 className="text-xl font-bold text-gray-900">{person.nombre} {person.apellido}</h3>
-          <p className="text-indigo-600 font-medium">{person.profesion}</p>
+          <h3 className="text-xl font-black text-gray-900 leading-tight">{person.nombre} {person.apellido}</h3>
+          <p className="text-indigo-600 font-bold uppercase tracking-widest text-[10px] mt-1">{person.profesion || 'Analista de Grafo'}</p>
         </div>
         <button
           onClick={() => onDelete(person.id)}
-          className="text-red-500 hover:text-red-700 text-sm"
+          className="text-gray-300 hover:text-red-500 transition-colors p-1"
         >
-          Delete
+          <Trash2 size={18} />
         </button>
       </div>
 
-      <div className="space-y-2 text-sm text-gray-600">
-        <div className="flex items-center space-x-2">
-          <Mail size={16} />
-          <span>{person.email}</span>
+      <div className="space-y-3 text-xs text-gray-500 font-medium relative">
+        <div className="flex items-center space-x-3 bg-gray-50/50 p-2 rounded-xl">
+          <Mail size={14} className="text-indigo-400" />
+          <span className="truncate">{person.email}</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Phone size={16} />
+        <div className="flex items-center space-x-3 bg-gray-50/50 p-2 rounded-xl">
+          <Phone size={14} className="text-indigo-400" />
           <span>{person.telefono}</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <MapPin size={16} />
-          <span>{person.ciudad}, {person.pais}</span>
+        <div className="flex items-center space-x-3 bg-gray-50/50 p-2 rounded-xl">
+          <MapPin size={14} className="text-indigo-400" />
+          <span>{person.ciudad_residencia || 'Local'}, {person.pais_residencia || 'Red'}</span>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {person.intereses && person.intereses.map((int, i) => (
-          <span key={i} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-medium">
-            {int}
-          </span>
-        ))}
-      </div>
+      {person.hobbies && person.hobbies.length > 0 && (
+        <div className="mt-6 flex flex-wrap gap-2 relative">
+          {person.hobbies.slice(0, 3).map((h, i) => (
+            <span key={i} className="bg-white border border-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm">
+              {h.nombre}
+            </span>
+          ))}
+          {person.hobbies.length > 3 && <span className="text-[9px] font-bold text-gray-300 mt-1">+{person.hobbies.length - 3}</span>}
+        </div>
+      )}
     </div>
   );
 };
