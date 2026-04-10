@@ -11,8 +11,13 @@ def setup():
             print("Archivo .env creado exitosamente.")
         else:
             print("Error: .env.example no encontrado.")
-    else:
-        print("El archivo .env ya existe.")
+
+    # Also ensure it exists in backend for local testing
+    if os.path.exists('.env') and not os.path.exists('backend/.env'):
+        with open('.env', 'r') as f:
+            content = f.read()
+        with open('backend/.env', 'w') as f:
+            f.write(content)
 
 if __name__ == "__main__":
     setup()

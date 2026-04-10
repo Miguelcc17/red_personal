@@ -11,7 +11,6 @@ class RelationshipRepository:
         data['created_at'] = datetime.utcnow().isoformat()
         data['updated_at'] = data['created_at']
 
-        # Ensure 'desde' is used consistently
         with self.conn.get_session() as session:
             result = session.run(
                 """
@@ -89,5 +88,6 @@ class RelationshipRepository:
 
     def delete(self, rel_id):
         with self.conn.get_session() as session:
-            session.run("MATCH ()-[r:RELATED_TO {id: $id}]->() DELETE r", id=rel_id)
-            return True
+            result = session.run("MATCH ()-[r:RELATED_TO {id: $id}]->() DELETE r RETURN count(r) as count", id=rel_id)
+            record = result.single()
+            return record['count'] > 0 if record else False

@@ -8,6 +8,11 @@ services:
       - "7687:7687"
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - neo4j_data:/data
     networks:
@@ -22,7 +27,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - neo4j
+      neo4j:
+        condition: service_healthy
     networks:
       - app-network
 
