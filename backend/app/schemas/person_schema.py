@@ -112,7 +112,7 @@ class PersonSchema(Schema):
     eneagrama = fields.Str(allow_none=True)
     genero = fields.Str(allow_none=True)
 
-    # Ubicación (nombres en vez de IDs para simplificar creación vía MERGE)
+    # Ubicación
     ciudad_nacimiento = fields.Str(allow_none=True)
     pais_nacimiento = fields.Str(allow_none=True)
     ciudad_residencia = fields.Str(allow_none=True)
@@ -128,7 +128,7 @@ class PersonSchema(Schema):
     especializacion = fields.List(fields.Str(), allow_none=True)
     modelo_trabajo = fields.Str(
         allow_none=True,
-        validate=validate.OneOf(["freelance", "in_house", "emprendedor", "hibrido"])
+        validate=validate.OneOf(["remoto", "presencial", "hibrido", "freelance", "in_house", "emprendedor"])
     )
     soft_skills = fields.List(fields.Str(), allow_none=True)
     vision_largo_plazo = fields.Str(allow_none=True)

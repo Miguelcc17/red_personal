@@ -139,12 +139,15 @@ const PersonForm = ({ onCreated }) => {
           <span>Trayectoria Profesional</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <input name="profesion" placeholder="Profesión" onChange={handleChange} className="border-2 border-gray-50 p-3 rounded-xl bg-gray-50/30" />
-          <input name="rol_actual" placeholder="Rol Actual" onChange={handleChange} className="border-2 border-gray-50 p-3 rounded-xl bg-gray-50/30" />
-          <select name="modelo_trabajo" onChange={handleChange} className="border-2 border-gray-50 p-3 rounded-xl bg-gray-50/30">
+          <input name="profesion" placeholder="Profesión" onChange={handleChange} className="border-2 border-gray-50 p-3 rounded-xl bg-gray-50/30 outline-none" />
+          <input name="rol_actual" placeholder="Rol Actual" onChange={handleChange} className="border-2 border-gray-50 p-3 rounded-xl bg-gray-50/30 outline-none" />
+          <select name="modelo_trabajo" value={formData.modelo_trabajo} onChange={handleChange} className="border-2 border-gray-50 p-3 rounded-xl bg-gray-50/30 outline-none">
             <option value="remoto">Remoto</option>
-            <option value="hibrido">Híbrido</option>
             <option value="presencial">Presencial</option>
+            <option value="hibrido">Híbrido</option>
+            <option value="freelance">Freelance</option>
+            <option value="in_house">In House</option>
+            <option value="emprendedor">Emprendedor</option>
           </select>
         </div>
 
