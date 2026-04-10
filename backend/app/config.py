@@ -11,8 +11,7 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
     DEBUG = os.getenv('FLASK_DEBUG', '1') == '1'
 
-    # In Docker, NEO4J_URI should be bolt://neo4j:7687
-    # For local testing, use bolt://localhost:7687
-    NEO4J_URI = os.getenv('NEO4J_URI', 'bolt://neo4j:7687')
-    NEO4J_USER = os.getenv('NEO4J_USER', 'neo4j')
-    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', 'password')
+    # Use APP_ prefixes to avoid conflict with standard Neo4j image variables
+    NEO4J_URI = os.getenv('APP_NEO4J_URI', 'bolt://neo4j:7687')
+    NEO4J_USER = os.getenv('APP_NEO4J_USER', 'neo4j')
+    NEO4J_PASSWORD = os.getenv('APP_NEO4J_PASSWORD', 'password')
