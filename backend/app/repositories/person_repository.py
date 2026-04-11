@@ -1,10 +1,20 @@
 from .neo4j_connection import neo4j_conn
 from datetime import datetime, date
 import uuid
+from neo4j.time import Date, DateTime
 
 class PersonRepository:
     def __init__(self):
         self.conn = neo4j_conn
+
+    def _convert_neo4j_types(self, data):
+        if isinstance(data, dict):
+            return {k: self._convert_neo4j_types(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._convert_neo4j_types(i) for i in data]
+        elif isinstance(data, (Date, DateTime)):
+            return data.to_native()
+        return data
 
     def create(self, data):
         data['id'] = str(uuid.uuid4())
@@ -84,7 +94,6 @@ class PersonRepository:
 
     def get_all(self):
         with self.conn.get_session() as session:
-            # Enhanced get_all to fetch essential metadata for the list view
             query = """
             MATCH (p:Person)
             OPTIONAL MATCH (p)-[:HAS_GENDER]->(g:Gender)
@@ -102,7 +111,7 @@ class PersonRepository:
                 data['profesion'] = record['profesion']
                 data['ciudad_residencia'] = record['ciudad_residencia']
                 data['pais_residencia'] = record['pais_residencia']
-                persons.append(data)
+                persons.append(self._convert_neo4j_types(data))
             return persons
 
     def get_by_id(self, person_id):
@@ -148,7 +157,7 @@ class PersonRepository:
             data['metas'] = record['metas']
             data['tatuajes'] = record['tatuajes']
 
-            return data
+            return self._convert_neo4j_types(data)
 
     def update(self, person_id, data):
         with self.conn.get_session() as session:

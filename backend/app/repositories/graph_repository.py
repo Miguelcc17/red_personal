@@ -1,12 +1,21 @@
 from .neo4j_connection import neo4j_conn
+from neo4j.time import Date, DateTime
 
 class GraphRepository:
     def __init__(self):
         self.conn = neo4j_conn
 
+    def _convert_neo4j_types(self, data):
+        if isinstance(data, dict):
+            return {k: self._convert_neo4j_types(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._convert_neo4j_types(i) for i in data]
+        elif isinstance(data, (Date, DateTime)):
+            return data.to_native()
+        return data
+
     def get_full_graph(self):
         with self.conn.get_session() as session:
-            # elementId() is the correct way to get a unique identifier in Neo4j 5.x
             query = """
             MATCH (n)
             OPTIONAL MATCH (n)-[r]->(m)
@@ -25,12 +34,11 @@ class GraphRepository:
                 elif 'titulo' in node: label = node['titulo']
                 elif 'descripcion' in node: label = node['descripcion']
 
-                # We use element_id as the primary id for visualization
                 nodes.append({
                     "id": node.element_id,
                     "label": label or str(node.element_id),
                     "group": list(node.labels)[0] if node.labels else "Unknown",
-                    "properties": dict(node)
+                    "properties": self._convert_neo4j_types(dict(node))
                 })
 
             links = []
@@ -41,13 +49,12 @@ class GraphRepository:
                         "source": link['source'],
                         "target": link['target'],
                         "label": link['label'],
-                        "properties": link['props']
+                        "properties": self._convert_neo4j_types(link['props'])
                     })
 
             return {"nodes": nodes, "links": links}
 
     def get_graph_by_person(self, person_id):
-        # Starts from a person and expands to all neighbors within 2 hops for a good "local" view
         with self.conn.get_session() as session:
             query = """
             MATCH (p:Person {id: $pid})
@@ -69,7 +76,7 @@ class GraphRepository:
                     "id": node.element_id,
                     "label": label,
                     "group": list(node.labels)[0] if node.labels else "Unknown",
-                    "properties": dict(node)
+                    "properties": self._convert_neo4j_types(dict(node))
                 })
 
             links = []
@@ -80,7 +87,7 @@ class GraphRepository:
                         "source": link['source'],
                         "target": link['target'],
                         "label": link['label'],
-                        "properties": link['props']
+                        "properties": self._convert_neo4j_types(link['props'])
                     })
 
             return {"nodes": nodes, "links": links}

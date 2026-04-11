@@ -1,10 +1,20 @@
 from .neo4j_connection import neo4j_conn
 from datetime import datetime, date
 import uuid
+from neo4j.time import Date, DateTime
 
 class RelationshipRepository:
     def __init__(self):
         self.conn = neo4j_conn
+
+    def _convert_neo4j_types(self, data):
+        if isinstance(data, dict):
+            return {k: self._convert_neo4j_types(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._convert_neo4j_types(i) for i in data]
+        elif isinstance(data, (Date, DateTime)):
+            return data.to_native()
+        return data
 
     def create(self, p1_id, p2_id, data):
         data['id'] = str(uuid.uuid4())
@@ -33,7 +43,7 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
-                return rel
+                return self._convert_neo4j_types(rel)
             return None
 
     def get_all(self):
@@ -46,7 +56,7 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
-                relationships.append(rel)
+                relationships.append(self._convert_neo4j_types(rel))
             return relationships
 
     def get_by_id(self, rel_id):
@@ -60,7 +70,7 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
-                return rel
+                return self._convert_neo4j_types(rel)
             return None
 
     def update(self, rel_id, data):
@@ -83,7 +93,7 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
-                return rel
+                return self._convert_neo4j_types(rel)
             return None
 
     def delete(self, rel_id):
