@@ -11,11 +11,12 @@ class GraphRepository:
         elif isinstance(data, list):
             return [self._convert_neo4j_types(i) for i in data]
         elif isinstance(data, (Date, DateTime)):
-            return data.to_native()
+            return data.isoformat()
         return data
 
     def get_full_graph(self):
         with self.conn.get_session() as session:
+            # elementId() is the correct way to get a unique identifier in Neo4j 5.x
             query = """
             MATCH (n)
             OPTIONAL MATCH (n)-[r]->(m)
@@ -34,6 +35,7 @@ class GraphRepository:
                 elif 'titulo' in node: label = node['titulo']
                 elif 'descripcion' in node: label = node['descripcion']
 
+                # We use element_id as the primary id for visualization
                 nodes.append({
                     "id": node.element_id,
                     "label": label or str(node.element_id),
@@ -55,6 +57,7 @@ class GraphRepository:
             return {"nodes": nodes, "links": links}
 
     def get_graph_by_person(self, person_id):
+        # Starts from a person and expands to all neighbors within 2 hops for a good "local" view
         with self.conn.get_session() as session:
             query = """
             MATCH (p:Person {id: $pid})

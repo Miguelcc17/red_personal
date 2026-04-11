@@ -13,7 +13,7 @@ class RelationshipRepository:
         elif isinstance(data, list):
             return [self._convert_neo4j_types(i) for i in data]
         elif isinstance(data, (Date, DateTime)):
-            return data.to_native()
+            return data.isoformat()
         return data
 
     def create(self, p1_id, p2_id, data):

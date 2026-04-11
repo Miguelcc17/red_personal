@@ -13,7 +13,7 @@ class PersonRepository:
         elif isinstance(data, list):
             return [self._convert_neo4j_types(i) for i in data]
         elif isinstance(data, (Date, DateTime)):
-            return data.to_native()
+            return data.isoformat() # Convert to string for consistent handling
         return data
 
     def create(self, data):
