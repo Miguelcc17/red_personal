@@ -8,16 +8,9 @@ const NodeDetailsPanel = ({ node, onClose }) => {
 
   return (
     <>
-      {/* Backdrop for better focus */}
-      <div
-        className="fixed inset-0 bg-slate-950/20 backdrop-blur-[2px] z-40 transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Side Drawer */}
+      <div className="fixed inset-0 bg-slate-950/20 backdrop-blur-[2px] z-40 transition-opacity" onClick={onClose} />
       <div className="fixed top-0 right-0 h-full w-[450px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-50 animate-in slide-in-from-right duration-500 ease-out flex flex-col border-l border-slate-100">
 
-        {/* Header Section */}
         <div className="p-8 pb-6 border-b border-slate-50 flex justify-between items-start">
           <div className="flex items-center space-x-5">
             <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-indigo-100 uppercase">
@@ -42,7 +35,6 @@ const NodeDetailsPanel = ({ node, onClose }) => {
           </button>
         </div>
 
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-hide">
           {group === 'Person' ? (
             <>
@@ -56,8 +48,8 @@ const NodeDetailsPanel = ({ node, onClose }) => {
                     <span className="text-xs text-slate-700 font-black">{props.edad || '??'} años, {props.genero || 'No def.'}</span>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col space-y-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">Residencia</span>
-                    <span className="text-xs text-slate-700 font-black truncate">{props.ciudad_residencia || 'Local'}</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">Ubicación</span>
+                    <span className="text-xs text-slate-700 font-black truncate">{props.ciudad_residencia || props.ciudad || 'Local'}</span>
                   </div>
                 </div>
               </section>
@@ -92,18 +84,20 @@ const NodeDetailsPanel = ({ node, onClose }) => {
                  <Info size={14}/> <span>Metadatos del Nodo</span>
               </div>
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-3">
-                {Object.entries(props).map(([key, value]) => (
-                  <div key={key} className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 last:border-0 last:pb-0">
-                    <span className="font-bold text-slate-400 uppercase text-[9px] tracking-tighter">{key}</span>
-                    <span className="text-slate-700 font-black">{String(value)}</span>
-                  </div>
-                ))}
+                {Object.entries(props).map(([key, value]) => {
+                  if (['id', 'created_at', 'updated_at'].includes(key)) return null;
+                  return (
+                    <div key={key} className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 last:border-0 last:pb-0">
+                      <span className="font-bold text-slate-400 uppercase text-[9px] tracking-tighter">{key}</span>
+                      <span className="text-slate-700 font-black truncate max-w-[200px]">{String(value)}</span>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-8 bg-slate-50 border-t border-slate-100">
            <div className="flex items-center justify-between">
               <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Node ID: {node.id}</p>

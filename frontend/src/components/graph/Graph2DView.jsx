@@ -1,16 +1,16 @@
 import React, { useRef } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 
-const Graph2DView = ({ data, onNodeClick }) => {
+const Graph2DView = ({ data, onNodeClick, onLinkClick }) => {
   const fgRef = useRef();
 
   const getLinkColor = (link) => {
     switch(link.label) {
-      case 'amigo': return '#6366f1'; // Indigo 500
-      case 'familiar': return '#10b981'; // Emerald 500
-      case 'compañero_trabajo': return '#f59e0b'; // Amber 500
-      case 'pareja': return '#ef4444'; // Red 500
-      default: return '#cbd5e1'; // Slate 300
+      case 'amigo': return '#6366f1';
+      case 'familiar': return '#10b981';
+      case 'compañero_trabajo': return '#f59e0b';
+      case 'pareja': return '#ef4444';
+      default: return '#cbd5e1';
     }
   };
 
@@ -28,12 +28,12 @@ const Graph2DView = ({ data, onNodeClick }) => {
         linkColor={getLinkColor}
         linkLabel="label"
         onNodeClick={onNodeClick}
+        onLinkClick={onLinkClick}
         cooldownTicks={100}
         d3AlphaDecay={0.03}
         d3VelocityDecay={0.3}
       />
 
-      {/* minimalist Legend */}
       <div className="absolute top-24 left-8 bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-slate-200 shadow-xl space-y-2">
         <p className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">Leyenda de Relación</p>
         <div className="flex items-center space-x-3"><span className="w-2.5 h-2.5 rounded-full bg-[#6366f1]"/> <span className="text-[10px] font-bold text-slate-600 uppercase">Amigo</span></div>
