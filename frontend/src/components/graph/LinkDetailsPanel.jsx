@@ -1,11 +1,10 @@
 import React from 'react';
-import { X, Share2, Calendar, Star, Clock, Info, ArrowRight, History, MessageSquare } from 'lucide-react';
+import { X, Share2, Calendar, Star, Clock, Info, ArrowRight, History, Edit2 } from 'lucide-react';
 
-const LinkDetailsPanel = ({ link, onClose }) => {
+const LinkDetailsPanel = ({ link, onClose, onEdit }) => {
   if (!link) return null;
   const props = link.properties || {};
 
-  // Handle bitacora deserialization if it comes as a string
   let bitacora = [];
   if (props.bitacora) {
     if (typeof props.bitacora === 'string') {
@@ -32,9 +31,16 @@ const LinkDetailsPanel = ({ link, onClose }) => {
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
-            <X size={24} />
-          </button>
+          <div className="flex space-x-2">
+            {onEdit && (
+              <button onClick={() => onEdit(link)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-indigo-100 shadow-sm">
+                <Edit2 size={20} />
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-hide text-slate-900">
@@ -69,7 +75,6 @@ const LinkDetailsPanel = ({ link, onClose }) => {
             </div>
           </section>
 
-          {/* Timeline of Logs (Bitácora) */}
           {bitacora.length > 0 && (
             <section className="space-y-6">
               <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
@@ -80,7 +85,7 @@ const LinkDetailsPanel = ({ link, onClose }) => {
                  {bitacora.map((log, i) => (
                    <div key={i} className="relative pl-6">
                       <div className="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 border-2 border-white shadow-sm" />
-                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1 group hover:border-indigo-200 transition-all">
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
                          <p className="text-[9px] font-black text-indigo-400 uppercase">{log.fecha}</p>
                          <p className="text-xs font-black text-slate-800">{log.evento}</p>
                          {log.comentario && <p className="text-[10px] text-slate-500 italic leading-relaxed">"{log.comentario}"</p>}
@@ -96,16 +101,13 @@ const LinkDetailsPanel = ({ link, onClose }) => {
                <Info size={14}/> <span>Contexto de la Relación</span>
             </div>
             <div className="bg-indigo-600 text-white p-6 rounded-[2rem] shadow-xl shadow-indigo-100 italic leading-relaxed text-sm font-medium">
-               "{props.descripcion || 'Sin descripción detallada disponible en el grafo.'}"
+               "{props.descripcion || 'Sin descripción detallada disponible.'}"
             </div>
           </section>
         </div>
 
         <div className="p-8 bg-slate-50 border-t border-slate-100">
-           <div className="flex items-center justify-between">
-              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Link ID: {link.id}</p>
-              <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] animate-pulse" />
-           </div>
+           <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest text-center">ID: {link.id}</p>
         </div>
       </div>
     </>
