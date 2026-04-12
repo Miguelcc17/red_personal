@@ -1,6 +1,7 @@
 from .neo4j_connection import neo4j_conn
 from datetime import datetime, date
 import uuid
+import json
 from neo4j.time import Date, DateTime
 
 class RelationshipRepository:
@@ -13,13 +14,19 @@ class RelationshipRepository:
         elif isinstance(data, list):
             return [self._convert_neo4j_types(i) for i in data]
         elif isinstance(data, (Date, DateTime)):
-            return data.to_native()
+            return data.isoformat()
         return data
 
     def create(self, p1_id, p2_id, data):
         data['id'] = str(uuid.uuid4())
         data['created_at'] = datetime.utcnow().isoformat()
         data['updated_at'] = data['created_at']
+
+        # Serialize bitacora to JSON string for storage if it exists
+        if 'bitacora' in data and data['bitacora']:
+            data['bitacora'] = json.dumps(data['bitacora'])
+        else:
+            data['bitacora'] = json.dumps([])
 
         with self.conn.get_session() as session:
             result = session.run(
@@ -33,6 +40,7 @@ class RelationshipRepository:
                     desde: $desde,
                     hasta: $hasta,
                     estado: $estado,
+                    bitacora: $bitacora,
                     created_at: $created_at,
                     updated_at: $updated_at
                 }]->(p2)
@@ -45,6 +53,10 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
+                # Deserialize bitacora back to list
+                if rel.get('bitacora'):
+                    try: rel['bitacora'] = json.loads(rel['bitacora'])
+                    except: rel['bitacora'] = []
                 return self._convert_neo4j_types(rel)
             return None
 
@@ -58,6 +70,9 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
+                if rel.get('bitacora'):
+                    try: rel['bitacora'] = json.loads(rel['bitacora'])
+                    except: rel['bitacora'] = []
                 relationships.append(self._convert_neo4j_types(rel))
             return relationships
 
@@ -72,12 +87,18 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
+                if rel.get('bitacora'):
+                    try: rel['bitacora'] = json.loads(rel['bitacora'])
+                    except: rel['bitacora'] = []
                 return self._convert_neo4j_types(rel)
             return None
 
     def update(self, rel_id, data):
         data['id'] = rel_id
         data['updated_at'] = datetime.utcnow().isoformat()
+
+        if 'bitacora' in data and data['bitacora']:
+            data['bitacora'] = json.dumps(data['bitacora'])
 
         set_parts = []
         for key in data.keys():
@@ -95,6 +116,9 @@ class RelationshipRepository:
                 rel = dict(record['r'])
                 rel['p1_id'] = record['p1_id']
                 rel['p2_id'] = record['p2_id']
+                if rel.get('bitacora'):
+                    try: rel['bitacora'] = json.loads(rel['bitacora'])
+                    except: rel['bitacora'] = []
                 return self._convert_neo4j_types(rel)
             return None
 

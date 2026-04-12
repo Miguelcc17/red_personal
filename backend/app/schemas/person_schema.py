@@ -79,6 +79,11 @@ class GoalSchema(Schema):
         validate=validate.OneOf(["pendiente", "en_progreso", "cumplido", "pausado"])
     )
 
+class LogEntrySchema(Schema):
+    fecha = fields.Raw(required=True)
+    evento = fields.Str(required=True)
+    comentario = fields.Str(allow_none=True)
+
 class RelationshipSchema(Schema):
     id = fields.Str(dump_only=True)
     p1_id = fields.Str(required=True)
@@ -97,6 +102,10 @@ class RelationshipSchema(Schema):
         allow_none=True,
         validate=validate.OneOf(["activa", "finalizada", "distante", "conflicto"])
     )
+
+    # Nuevo campo para bitácora
+    bitacora = fields.List(fields.Nested(LogEntrySchema), allow_none=True)
+
     created_at = fields.Raw(dump_only=True)
     updated_at = fields.Raw(dump_only=True)
 

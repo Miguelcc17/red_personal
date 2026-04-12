@@ -1,9 +1,19 @@
 import React from 'react';
-import { X, Share2, Calendar, Star, Clock, Info, ArrowRight } from 'lucide-react';
+import { X, Share2, Calendar, Star, Clock, Info, ArrowRight, History, MessageSquare } from 'lucide-react';
 
-const LinkDetailsPanel = ({ link, onClose, getPersonName }) => {
+const LinkDetailsPanel = ({ link, onClose }) => {
   if (!link) return null;
   const props = link.properties || {};
+
+  // Handle bitacora deserialization if it comes as a string
+  let bitacora = [];
+  if (props.bitacora) {
+    if (typeof props.bitacora === 'string') {
+       try { bitacora = JSON.parse(props.bitacora); } catch(e) { bitacora = []; }
+    } else {
+       bitacora = props.bitacora;
+    }
+  }
 
   return (
     <>
@@ -27,24 +37,7 @@ const LinkDetailsPanel = ({ link, onClose, getPersonName }) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-hide">
-          {/* Visual Connection */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-center space-x-6 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 shadow-inner">
-               <div className="text-center space-y-1">
-                  <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black mx-auto shadow-lg">?</div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Origen</p>
-               </div>
-               <ArrowRight className="text-indigo-200" size={24} />
-               <div className="text-center space-y-1">
-                  <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black mx-auto shadow-lg">?</div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Destino</p>
-               </div>
-            </div>
-            <p className="text-[10px] text-center text-slate-400 font-medium italic">Nota: Las identidades están vinculadas en el grafo base.</p>
-          </section>
-
-          {/* Analysis Section */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-hide text-slate-900">
           <section className="space-y-6">
             <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
                <Star size={14}/> <span>Análisis de Vínculo</span>
@@ -76,12 +69,33 @@ const LinkDetailsPanel = ({ link, onClose, getPersonName }) => {
             </div>
           </section>
 
-          {/* Description Section */}
+          {/* Timeline of Logs (Bitácora) */}
+          {bitacora.length > 0 && (
+            <section className="space-y-6">
+              <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
+                 <History size={14}/> <span>Bitácora de Eventos</span>
+              </div>
+              <div className="space-y-6 relative ml-2">
+                 <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-indigo-100" />
+                 {bitacora.map((log, i) => (
+                   <div key={i} className="relative pl-6">
+                      <div className="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 border-2 border-white shadow-sm" />
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1 group hover:border-indigo-200 transition-all">
+                         <p className="text-[9px] font-black text-indigo-400 uppercase">{log.fecha}</p>
+                         <p className="text-xs font-black text-slate-800">{log.evento}</p>
+                         {log.comentario && <p className="text-[10px] text-slate-500 italic leading-relaxed">"{log.comentario}"</p>}
+                      </div>
+                   </div>
+                 ))}
+              </div>
+            </section>
+          )}
+
           <section className="space-y-4">
             <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
-               <Info size={14}/> <span>Descripción del Contexto</span>
+               <Info size={14}/> <span>Contexto de la Relación</span>
             </div>
-            <div className="bg-indigo-50 p-6 rounded-[2rem] shadow-xl shadow-indigo-100 italic leading-relaxed text-sm font-medium text-indigo-700 border border-indigo-100">
+            <div className="bg-indigo-600 text-white p-6 rounded-[2rem] shadow-xl shadow-indigo-100 italic leading-relaxed text-sm font-medium">
                "{props.descripcion || 'Sin descripción detallada disponible en el grafo.'}"
             </div>
           </section>

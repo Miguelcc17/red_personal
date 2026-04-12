@@ -4,7 +4,7 @@ import { useRelationships } from '../hooks/useRelationships';
 import { usePersons } from '../hooks/usePersons';
 import { createRelationship, deleteRelationship } from '../api/relationshipsApi';
 import Loader from '../components/common/Loader';
-import { Plus, Share2, Trash2, Calendar, Star, ArrowRight, User, Search, Info, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Share2, Trash2, Calendar, Star, ArrowRight, User, Search, Info, Clock, MessageSquare, History } from 'lucide-react';
 
 const RELATIONSHIP_TYPES = [
   { id: 'amigo', label: 'Amigo/a', trustLabel: 'Nivel de Amistad', help: 'Vínculo basado en afecto e historia común.' },
@@ -42,14 +42,29 @@ const RelationshipsPage = () => {
     p1_id: '', p2_id: '', tipo_relacion: 'amigo',
     descripcion: '', nivel_confianza: 3,
     desde: new Date().toISOString().split('T')[0],
-    hasta: '', estado: 'activa'
+    hasta: '', estado: 'activa', bitacora: []
   });
+
+  const [logInput, setLogInput] = useState({ fecha: new Date().toISOString().split('T')[0], evento: '', comentario: '' });
 
   const filteredSource = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes(searchSource.toLowerCase())), [persons, searchSource]);
   const filteredTarget = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes(searchTarget.toLowerCase())), [persons, searchTarget]);
   const filteredTypes = useMemo(() => RELATIONSHIP_TYPES.filter(t => t.label.toLowerCase().includes(searchType.toLowerCase())), [searchType]);
 
   const selectedTypeObj = useMemo(() => RELATIONSHIP_TYPES.find(t => t.id === formData.tipo_relacion), [formData.tipo_relacion]);
+
+  const addLogEntry = () => {
+    if (logInput.evento.trim()) {
+      setFormData({ ...formData, bitacora: [...formData.bitacora, logInput] });
+      setLogInput({ fecha: new Date().toISOString().split('T')[0], evento: '', comentario: '' });
+    }
+  };
+
+  const removeLogEntry = (index) => {
+    const newBitacora = [...formData.bitacora];
+    newBitacora.splice(index, 1);
+    setFormData({ ...formData, bitacora: newBitacora });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,7 +80,7 @@ const RelationshipsPage = () => {
   const resetForm = () => {
     setShowForm(false);
     setStep(1);
-    setFormData({ p1_id: '', p2_id: '', tipo_relacion: 'amigo', descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0], hasta: '', estado: 'activa' });
+    setFormData({ p1_id: '', p2_id: '', tipo_relacion: 'amigo', descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0], hasta: '', estado: 'activa', bitacora: [] });
   };
 
   const getPersonName = (id) => {
@@ -81,7 +96,7 @@ const RelationshipsPage = () => {
         <div className="relative z-10">
           <h2 className="text-3xl font-black uppercase tracking-tighter mb-4 text-indigo-400">Análisis de Vínculos</h2>
           <p className="text-slate-300 max-w-2xl leading-relaxed font-medium">
-            Define la naturaleza de las conexiones entre individuos. Registra la historia completa, incluyendo el estado actual y la duración de la relación para un análisis temporal profundo.
+            Define la naturaleza de las conexiones. Registra eventos clave en la bitácora de la relación para rastrear hitos, conflictos o anécdotas compartidas.
           </p>
         </div>
         <Share2 className="absolute -right-10 -bottom-10 w-64 h-64 text-indigo-600 opacity-10" />
@@ -105,7 +120,7 @@ const RelationshipsPage = () => {
             {[1, 2, 3].map(s => (
               <div key={s} className={`flex-1 p-8 text-center font-black uppercase tracking-widest text-[10px] flex items-center justify-center space-x-3 ${step === s ? 'text-indigo-600 bg-white border-b-2 border-indigo-600' : 'text-slate-300'}`}>
                 <div className={`w-8 h-8 rounded-2xl flex items-center justify-center ${step === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-200 text-slate-400'}`}>{s}</div>
-                <span>{s === 1 ? 'Persona A' : s === 2 ? 'Persona B' : 'Detalles del Vínculo'}</span>
+                <span>{s === 1 ? 'Persona A' : s === 2 ? 'Persona B' : 'Detalles y Bitácora'}</span>
               </div>
             ))}
           </div>
@@ -121,11 +136,11 @@ const RelationshipsPage = () => {
                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={24} />
                    <input value={searchSource} onChange={(e)=>setSearchSource(e.target.value)} placeholder="Buscar por nombre o apellido..." className="w-full pl-16 pr-6 py-5 rounded-[2rem] border-2 border-slate-100 focus:border-indigo-500 outline-none text-slate-900 font-bold shadow-sm transition-all" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-h-[400px] overflow-y-auto p-6 scrollbar-hide">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-h-[400px] overflow-y-auto p-6 scrollbar-hide text-slate-900">
                   {filteredSource.map(p => (
                     <button key={p.id} onClick={()=>{ setFormData({...formData, p1_id: p.id}); setStep(2); }} className={`p-8 rounded-[2.5rem] border-2 transition-all flex flex-col items-center space-y-4 hover:scale-105 ${formData.p1_id === p.id ? 'border-indigo-600 bg-indigo-50 shadow-2xl' : 'border-slate-50 bg-slate-50 hover:border-indigo-200 shadow-sm'}`}>
                       <div className="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center text-indigo-600 text-xl font-black uppercase">{p.nombre[0]}{p.apellido[0]}</div>
-                      <span className="text-xs font-black text-slate-800 uppercase tracking-tighter text-center">{p.nombre} {p.apellido}</span>
+                      <span className="text-xs font-black uppercase tracking-tighter text-center">{p.nombre} {p.apellido}</span>
                     </button>
                   ))}
                 </div>
@@ -142,11 +157,11 @@ const RelationshipsPage = () => {
                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={24} />
                    <input value={searchTarget} onChange={(e)=>setSearchTarget(e.target.value)} placeholder="Buscar por nombre..." className="w-full pl-16 pr-6 py-5 rounded-[2rem] border-2 border-slate-100 focus:border-indigo-500 outline-none text-slate-900 font-bold shadow-sm transition-all" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-h-[400px] overflow-y-auto p-6 scrollbar-hide">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-h-[400px] overflow-y-auto p-6 scrollbar-hide text-slate-900">
                   {filteredTarget.filter(p => p.id !== formData.p1_id).map(p => (
                     <button key={p.id} onClick={()=>{ setFormData({...formData, p2_id: p.id}); setStep(3); }} className={`p-8 rounded-[2.5rem] border-2 transition-all flex flex-col items-center space-y-4 hover:scale-105 ${formData.p2_id === p.id ? 'border-indigo-600 bg-indigo-50 shadow-2xl' : 'border-slate-50 bg-slate-50 hover:border-indigo-200 shadow-sm'}`}>
                       <div className="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center text-indigo-600 text-xl font-black uppercase">{p.nombre[0]}{p.apellido[0]}</div>
-                      <span className="text-xs font-black text-slate-800 uppercase tracking-tighter text-center">{p.nombre} {p.apellido}</span>
+                      <span className="text-xs font-black uppercase tracking-tighter text-center">{p.nombre} {p.apellido}</span>
                     </button>
                   ))}
                 </div>
@@ -171,9 +186,10 @@ const RelationshipsPage = () => {
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                  {/* Left Column: Core Data */}
+                  <div className="space-y-8">
+                    <div className="space-y-4">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Naturaleza del Vínculo</label>
                       <div className="relative group">
                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
@@ -186,57 +202,73 @@ const RelationshipsPage = () => {
                           </button>
                         ))}
                       </div>
-                      {selectedTypeObj && (
-                        <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-start space-x-3 mt-4">
-                           <Info className="text-indigo-600 mt-0.5" size={14} />
-                           <p className="text-[11px] text-indigo-700 font-medium leading-relaxed italic">"{selectedTypeObj.help}"</p>
-                        </div>
-                      )}
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado de la Relación</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {['activa', 'finalizada', 'distante', 'conflicto'].map(s => (
-                          <button key={s} type="button" onClick={()=>setFormData({...formData, estado: s})} className={`p-3 rounded-xl text-[10px] font-black uppercase transition-all ${formData.estado === s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                            {s}
-                          </button>
-                        ))}
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['activa', 'finalizada', 'distante', 'conflicto'].map(s => (
+                            <button key={s} type="button" onClick={()=>setFormData({...formData, estado: s})} className={`p-3 rounded-xl text-[10px] font-black uppercase transition-all ${formData.estado === s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-slate-900">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{selectedTypeObj?.trustLabel || 'Nivel de Confianza'}</label>
+                        <div className="flex items-center space-x-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                           <input type="range" min="1" max="5" value={formData.nivel_confianza} onChange={(e)=>setFormData({...formData, nivel_confianza: parseInt(e.target.value)})} className="flex-1 h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600" />
+                           <span className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg">{formData.nivel_confianza}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Inicio</label>
+                        <input type="date" value={formData.desde} onChange={(e)=>setFormData({...formData, desde: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 shadow-sm" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Fin</label>
+                        <input type="date" value={formData.hasta} onChange={(e)=>setFormData({...formData, hasta: e.target.value})} disabled={formData.estado === 'activa'} className={`w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 shadow-sm ${formData.estado === 'activa' ? 'opacity-30 cursor-not-allowed' : ''}`} />
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-8">
+                  {/* Right Column: Bitácora de Eventos */}
+                  <div className="space-y-8 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
+                    <div className="flex items-center space-x-3 text-indigo-600 font-black uppercase tracking-widest text-[10px]">
+                       <History size={16}/> <span>Bitácora de la Relación</span>
+                    </div>
+
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{selectedTypeObj?.trustLabel || 'Nivel de Confianza'}</label>
-                      <div className="flex items-center space-x-6 bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-inner">
-                         <input type="range" min="1" max="5" value={formData.nivel_confianza} onChange={(e)=>setFormData({...formData, nivel_confianza: parseInt(e.target.value)})} className="flex-1 h-3 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600" />
-                         <div className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex flex-col items-center justify-center shadow-xl shadow-indigo-100">
-                            <span className="text-xl font-black">{formData.nivel_confianza}</span>
-                            <span className="text-[8px] font-bold uppercase opacity-50">/ 5</span>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <input type="date" value={logInput.fecha} onChange={(e)=>setLogInput({...logInput, fecha: e.target.value})} className="bg-white border p-3 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100" />
+                          <input placeholder="Nombre del evento (ej: Pelea, Viaje...)" value={logInput.evento} onChange={(e)=>setLogInput({...logInput, evento: e.target.value})} className="bg-white border p-3 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100" />
+                       </div>
+                       <textarea placeholder="Comentarios adicionales..." value={logInput.comentario} onChange={(e)=>setLogInput({...logInput, comentario: e.target.value})} className="w-full bg-white border p-3 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-100 h-20" />
+                       <button type="button" onClick={addLogEntry} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">Añadir a Bitácora</button>
+                    </div>
+
+                    <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-hide">
+                       {formData.bitacora.map((log, i) => (
+                         <div key={i} className="bg-white p-4 rounded-2xl border border-indigo-50 shadow-sm flex justify-between items-start group">
+                            <div className="space-y-1">
+                               <p className="text-[9px] font-black text-indigo-400 uppercase">{log.fecha}</p>
+                               <p className="text-xs font-black text-slate-800">{log.evento}</p>
+                               {log.comentario && <p className="text-[10px] text-slate-500 italic">"{log.comentario}"</p>}
+                            </div>
+                            <button type="button" onClick={()=>removeLogEntry(i)} className="text-slate-200 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
                          </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Inició el...</label>
-                        <input type="date" value={formData.desde} onChange={(e)=>setFormData({...formData, desde: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 shadow-sm" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Terminó el...</label>
-                        <input type="date" value={formData.hasta} onChange={(e)=>setFormData({...formData, hasta: e.target.value})} disabled={formData.estado === 'activa'} className={`w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 shadow-sm ${formData.estado === 'activa' ? 'opacity-30 cursor-not-allowed' : ''}`} />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contexto Detallado</label>
-                      <textarea value={formData.descripcion} onChange={(e)=>setFormData({...formData, descripcion: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 h-24 shadow-sm" placeholder="Añade notas sobre el origen del vínculo..." />
+                       ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex space-x-6 pt-8 border-t border-slate-100">
+                <div className="flex space-x-6 pt-12 border-t border-slate-100">
                   <button type="button" onClick={()=>setStep(2)} className="flex-1 py-5 rounded-[2rem] bg-slate-100 text-slate-600 font-black uppercase tracking-widest hover:bg-slate-200 transition-all">← Anterior</button>
-                  <button type="submit" className="flex-[3] py-5 rounded-[2rem] bg-indigo-600 text-white font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-200 hover:scale-[1.01]">Establecer Vínculo en el Grafo</button>
+                  <button type="submit" className="flex-[3] py-5 rounded-[2rem] bg-indigo-600 text-white font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-200 hover:scale-[1.01]">Establecer Vínculo y Guardar Bitácora</button>
                 </div>
               </form>
             )}
@@ -269,8 +301,14 @@ const RelationshipsPage = () => {
                   </div>
                   <div className="flex items-center space-x-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
                     <Calendar size={14} />
-                    <span>{rel.desde} {rel.hasta ? `a ${rel.hasta}` : '(Actualidad)'}</span>
+                    <span>Desde {rel.desde} {rel.hasta ? `a ${rel.hasta}` : '(Actualidad)'}</span>
                   </div>
+                  {rel.bitacora && rel.bitacora.length > 0 && (
+                    <div className="flex items-center space-x-2 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100 text-amber-700">
+                       <MessageSquare size={14} />
+                       <span>{rel.bitacora.length} Eventos</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
