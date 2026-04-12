@@ -3,13 +3,19 @@ import Navbar from './Navbar';
 
 const PageContainer = ({ children, title }) => {
   return (
-    <div className="flex bg-gray-100 min-h-screen">
+    <div className="flex bg-slate-50 min-h-screen font-sans">
       <Navbar />
-      <main className="flex-1 ml-64 p-8">
-        <header className="mb-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
+      <main className="flex-1 ml-72 p-12">
+        <header className="mb-12 flex justify-between items-center animate-in fade-in slide-in-from-left-4 duration-700">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">{title}</h1>
+            <div className="h-1.5 w-16 bg-indigo-600 rounded-full mt-2" />
+          </div>
+          <div className="flex space-x-4">
+             {/* Dynamic slots for actions if needed */}
+          </div>
         </header>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[calc(100vh-12rem)]">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
           {children}
         </div>
       </main>
