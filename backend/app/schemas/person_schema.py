@@ -84,7 +84,10 @@ class RelationshipSchema(Schema):
     p1_id = fields.Str(required=True)
     p2_id = fields.Str(required=True)
     tipo_relacion = fields.Str(required=True, validate=validate.OneOf([
-        "amigo", "familiar", "compañero_trabajo", "pareja", "conocido", "socio"
+        "amigo", "familiar", "compañero_trabajo", "pareja", "conocido", "socio",
+        "hermano_a", "padre_madre", "hijo_a", "primo_a", "tio_a", "abuelo_a",
+        "mentor_a", "cliente", "proveedor", "ex_pareja", "enemigo_a", "rival",
+        "vecino_a", "compañero_estudio", "colega_sector", "inversionista", "cofundador_a"
     ]))
     descripcion = fields.Str(allow_none=True)
     nivel_confianza = fields.Int(validate=validate.Range(min=1, max=5))
