@@ -4,7 +4,7 @@ import { useRelationships } from '../hooks/useRelationships';
 import { usePersons } from '../hooks/usePersons';
 import { createRelationship, deleteRelationship } from '../api/relationshipsApi';
 import Loader from '../components/common/Loader';
-import { Plus, Share2, Trash2, Calendar, Star, ArrowRight, User, Search, Info } from 'lucide-react';
+import { Plus, Share2, Trash2, Calendar, Star, ArrowRight, User, Search, Info, Clock, AlertCircle } from 'lucide-react';
 
 const RELATIONSHIP_TYPES = [
   { id: 'amigo', label: 'Amigo/a', trustLabel: 'Nivel de Amistad', help: 'Vínculo basado en afecto e historia común.' },
@@ -40,7 +40,9 @@ const RelationshipsPage = () => {
 
   const [formData, setFormData] = useState({
     p1_id: '', p2_id: '', tipo_relacion: 'amigo',
-    descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0]
+    descripcion: '', nivel_confianza: 3,
+    desde: new Date().toISOString().split('T')[0],
+    hasta: '', estado: 'activa'
   });
 
   const filteredSource = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes(searchSource.toLowerCase())), [persons, searchSource]);
@@ -63,7 +65,7 @@ const RelationshipsPage = () => {
   const resetForm = () => {
     setShowForm(false);
     setStep(1);
-    setFormData({ p1_id: '', p2_id: '', tipo_relacion: 'amigo', descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0] });
+    setFormData({ p1_id: '', p2_id: '', tipo_relacion: 'amigo', descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0], hasta: '', estado: 'activa' });
   };
 
   const getPersonName = (id) => {
@@ -79,7 +81,7 @@ const RelationshipsPage = () => {
         <div className="relative z-10">
           <h2 className="text-3xl font-black uppercase tracking-tighter mb-4 text-indigo-400">Análisis de Vínculos</h2>
           <p className="text-slate-300 max-w-2xl leading-relaxed font-medium">
-            Define la naturaleza de las conexiones entre individuos. El sistema ajustará los parámetros de confianza según el tipo de vínculo seleccionado para un análisis de red más preciso.
+            Define la naturaleza de las conexiones entre individuos. Registra la historia completa, incluyendo el estado actual y la duración de la relación para un análisis temporal profundo.
           </p>
         </div>
         <Share2 className="absolute -right-10 -bottom-10 w-64 h-64 text-indigo-600 opacity-10" />
@@ -191,6 +193,17 @@ const RelationshipsPage = () => {
                         </div>
                       )}
                     </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado de la Relación</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['activa', 'finalizada', 'distante', 'conflicto'].map(s => (
+                          <button key={s} type="button" onClick={()=>setFormData({...formData, estado: s})} className={`p-3 rounded-xl text-[10px] font-black uppercase transition-all ${formData.estado === s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-8">
@@ -204,9 +217,15 @@ const RelationshipsPage = () => {
                          </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Inicio de Conexión</label>
-                      <input type="date" value={formData.desde} onChange={(e)=>setFormData({...formData, desde: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 shadow-sm" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Inició el...</label>
+                        <input type="date" value={formData.desde} onChange={(e)=>setFormData({...formData, desde: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 shadow-sm" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Terminó el...</label>
+                        <input type="date" value={formData.hasta} onChange={(e)=>setFormData({...formData, hasta: e.target.value})} disabled={formData.estado === 'activa'} className={`w-full border-2 border-slate-100 p-4 rounded-2xl bg-white text-slate-900 font-bold outline-none focus:border-indigo-500 shadow-sm ${formData.estado === 'activa' ? 'opacity-30 cursor-not-allowed' : ''}`} />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contexto Detallado</label>
@@ -244,9 +263,13 @@ const RelationshipsPage = () => {
                     <Star size={14} className="fill-current" />
                     <span>{RELATIONSHIP_TYPES.find(t=>t.id===rel.tipo_relacion)?.label || rel.tipo_relacion} • {rel.nivel_confianza}/5</span>
                   </div>
+                  <div className={`flex items-center space-x-2 px-4 py-2 rounded-2xl border shadow-sm ${rel.estado === 'activa' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                    <Clock size={14} />
+                    <span className="uppercase">{rel.estado}</span>
+                  </div>
                   <div className="flex items-center space-x-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
                     <Calendar size={14} />
-                    <span>Desde {rel.desde}</span>
+                    <span>{rel.desde} {rel.hasta ? `a ${rel.hasta}` : '(Actualidad)'}</span>
                   </div>
                 </div>
               </div>

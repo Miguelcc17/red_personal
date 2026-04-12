@@ -13,7 +13,7 @@ class RelationshipRepository:
         elif isinstance(data, list):
             return [self._convert_neo4j_types(i) for i in data]
         elif isinstance(data, (Date, DateTime)):
-            return data.isoformat()
+            return data.to_native()
         return data
 
     def create(self, p1_id, p2_id, data):
@@ -31,6 +31,8 @@ class RelationshipRepository:
                     descripcion: $descripcion,
                     nivel_confianza: $nivel_confianza,
                     desde: $desde,
+                    hasta: $hasta,
+                    estado: $estado,
                     created_at: $created_at,
                     updated_at: $updated_at
                 }]->(p2)
