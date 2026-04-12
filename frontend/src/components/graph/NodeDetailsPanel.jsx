@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, MapPin, Briefcase, Mail, Phone, Info, Star, Hash, Building, Target, Globe } from 'lucide-react';
+import { X, User, MapPin, Target, Star, Hash, Building, Globe, Info } from 'lucide-react';
 
 const NodeDetailsPanel = ({ node, onClose }) => {
   if (!node) return null;
@@ -7,94 +7,111 @@ const NodeDetailsPanel = ({ node, onClose }) => {
   const group = node.group || 'Entidad';
 
   return (
-    <div className="absolute top-4 right-4 w-[450px] max-h-[calc(100vh-4rem)] overflow-y-auto bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl border border-indigo-50 p-8 z-50 animate-in fade-in slide-in-from-right-8 duration-500 scrollbar-hide">
-      <div className="flex justify-between items-start mb-8 sticky top-0 bg-white/50 backdrop-blur-md py-4 z-10 border-b border-indigo-50/50">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-indigo-200 uppercase">
-            {props.nombre ? props.nombre[0] : (props.nombre_completo ? props.nombre_completo[0] : group[0])}
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-gray-900 leading-tight">
-              {props.nombre_completo || (props.nombre ? `${props.nombre} ${props.apellido || ''}` : group)}
-            </h3>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-indigo-600 font-bold uppercase tracking-widest text-[10px]">{group}</span>
-              {props.signo_zodiacal && (
-                <span className="bg-indigo-50 text-indigo-400 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter">
-                  {props.signo_zodiacal}
-                </span>
-              )}
+    <>
+      {/* Backdrop for better focus */}
+      <div
+        className="fixed inset-0 bg-slate-950/20 backdrop-blur-[2px] z-40 transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Side Drawer */}
+      <div className="fixed top-0 right-0 h-full w-[450px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-50 animate-in slide-in-from-right duration-500 ease-out flex flex-col border-l border-slate-100">
+
+        {/* Header Section */}
+        <div className="p-8 pb-6 border-b border-slate-50 flex justify-between items-start">
+          <div className="flex items-center space-x-5">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-indigo-100 uppercase">
+              {props.nombre ? props.nombre[0] : (props.nombre_completo ? props.nombre_completo[0] : group[0])}
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-slate-900 leading-tight">
+                {props.nombre_completo || (props.nombre ? `${props.nombre} ${props.apellido || ''}` : group)}
+              </h3>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className="text-indigo-600 font-bold uppercase tracking-widest text-[10px] bg-indigo-50 px-2 py-0.5 rounded-md">{group}</span>
+                {props.signo_zodiacal && (
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-tighter">
+                    • {props.signo_zodiacal}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+            <X size={24} />
+          </button>
         </div>
-        <button onClick={onClose} className="p-2 text-gray-400 hover:text-indigo-600 transition-colors bg-white rounded-xl shadow-sm border border-gray-100">
-          <X size={20} />
-        </button>
-      </div>
 
-      <div className="space-y-8">
-        {group === 'Person' ? (
-          <>
-            <section className="space-y-4">
-              <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
-                 <Hash size={14}/> <span>Identidad Analítica</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-50 flex items-center space-x-3">
-                  <User size={16} className="text-indigo-400" />
-                  <span className="text-xs text-gray-600 font-medium">{props.edad || '??'} años, {props.genero || 'No def.'}</span>
-                </div>
-                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-50 flex items-center space-x-3">
-                  <Globe size={16} className="text-indigo-400" />
-                  <span className="text-xs text-gray-600 font-medium truncate">{props.ciudad_residencia || 'Local'}, {props.pais_residencia || 'Global'}</span>
-                </div>
-              </div>
-            </section>
-
-            {props.valores_fundamentales && props.valores_fundamentales.length > 0 && (
-              <section className="space-y-4 pt-4 border-t border-gray-50">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-hide">
+          {group === 'Person' ? (
+            <>
+              <section className="space-y-4">
                 <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
-                   <Star size={14}/> <span>Valores y Motivadores</span>
+                   <Hash size={14}/> <span>Identidad Analítica</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                   {props.valores_fundamentales.map((v, i) => (
-                     <span key={i} className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-[10px] font-bold border border-indigo-100/50 uppercase">{v}</span>
-                   ))}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col space-y-1">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">Edad / Género</span>
+                    <span className="text-xs text-slate-700 font-black">{props.edad || '??'} años, {props.genero || 'No def.'}</span>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col space-y-1">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">Residencia</span>
+                    <span className="text-xs text-slate-700 font-black truncate">{props.ciudad_residencia || 'Local'}</span>
+                  </div>
                 </div>
               </section>
-            )}
 
-            {props.vision_largo_plazo && (
-              <div className="pt-8 border-t border-gray-50">
-                <div className="bg-indigo-600 text-white p-6 rounded-3xl shadow-xl shadow-indigo-100 flex flex-col items-center text-center space-y-2">
-                    <Target size={24} className="opacity-50" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Visión a Largo Plazo</p>
-                    <p className="text-sm font-medium italic leading-relaxed">"{props.vision_largo_plazo}"</p>
-                </div>
+              {props.valores_fundamentales && props.valores_fundamentales.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
+                     <Star size={14}/> <span>Valores y Motivadores</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                     {props.valores_fundamentales.map((v, i) => (
+                       <span key={i} className="bg-white text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black border border-indigo-100 shadow-sm uppercase">{v}</span>
+                     ))}
+                  </div>
+                </section>
+              )}
+
+              {props.vision_largo_plazo && (
+                <section className="space-y-4">
+                  <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
+                     <Target size={14}/> <span>Visión Estratégica</span>
+                  </div>
+                  <div className="bg-indigo-600 text-white p-6 rounded-[2rem] shadow-xl shadow-indigo-100 italic leading-relaxed text-sm font-medium">
+                     "{props.vision_largo_plazo}"
+                  </div>
+                </section>
+              )}
+            </>
+          ) : (
+            <section className="space-y-4">
+              <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
+                 <Info size={14}/> <span>Metadatos del Nodo</span>
               </div>
-            )}
-          </>
-        ) : (
-          <section className="space-y-4">
-            <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
-               <Info size={14}/> <span>Propiedades del Nodo</span>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-2xl">
-              {Object.entries(props).map(([key, value]) => (
-                <div key={key} className="flex justify-between text-xs py-1 border-b border-gray-100 last:border-0">
-                  <span className="font-bold text-gray-400 uppercase text-[9px]">{key}</span>
-                  <span className="text-gray-700">{String(value)}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-3">
+                {Object.entries(props).map(([key, value]) => (
+                  <div key={key} className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 last:border-0 last:pb-0">
+                    <span className="font-bold text-slate-400 uppercase text-[9px] tracking-tighter">{key}</span>
+                    <span className="text-slate-700 font-black">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
 
-        <div className="pt-4 text-center">
-          <p className="text-[9px] text-gray-300 font-medium">Elemento de Grafo: {node.id}</p>
+        {/* Footer */}
+        <div className="p-8 bg-slate-50 border-t border-slate-100">
+           <div className="flex items-center justify-between">
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Node ID: {node.id}</p>
+              <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" />
+           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
