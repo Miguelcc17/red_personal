@@ -1,22 +1,30 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Trash2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Trash2, Edit2 } from 'lucide-react';
 
-const PersonCard = ({ person, onDelete }) => {
+const PersonCard = ({ person, onDelete, onEdit }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-[2rem] p-6 hover:shadow-2xl hover:shadow-indigo-50 transition-all group relative overflow-hidden text-slate-900">
       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110" />
 
       <div className="flex justify-between items-start mb-6 relative">
         <div>
-          <h3 className="text-xl font-black text-slate-900 leading-tight">{person.nombre} {person.apellido}</h3>
+          <h3 className="text-xl font-black text-gray-900 leading-tight">{person.nombre} {person.apellido}</h3>
           <p className="text-indigo-700 font-bold uppercase tracking-widest text-[10px] mt-1">{person.profesion || 'Analista de Grafo'}</p>
         </div>
-        <button
-          onClick={() => onDelete(person.id)}
-          className="text-slate-300 hover:text-red-500 transition-colors p-1"
-        >
-          <Trash2 size={18} />
-        </button>
+        <div className="flex space-x-1">
+          <button
+            onClick={() => onEdit(person)}
+            className="text-slate-300 hover:text-indigo-600 transition-colors p-1"
+          >
+            <Edit2 size={18} />
+          </button>
+          <button
+            onClick={() => onDelete(person.id)}
+            className="text-slate-300 hover:text-red-500 transition-colors p-1"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3 text-xs text-slate-600 font-semibold relative">

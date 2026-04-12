@@ -13,7 +13,7 @@ class PersonRepository:
         elif isinstance(data, list):
             return [self._convert_neo4j_types(i) for i in data]
         elif isinstance(data, (Date, DateTime)):
-            return data.isoformat() # Convert to string for consistent handling
+            return data.to_native()
         return data
 
     def create(self, data):
@@ -161,11 +161,35 @@ class PersonRepository:
 
     def update(self, person_id, data):
         with self.conn.get_session() as session:
+            # 1. Update basic properties
             data['id'] = person_id
             data['updated_at'] = datetime.utcnow().isoformat()
-            set_clause = ", ".join([f"p.{k} = ${k}" for k in data.keys() if k != 'id' and not isinstance(data[k], (list, dict))])
-            if set_clause:
-                session.run(f"MATCH (p:Person {{id: $id}}) SET {set_clause}", **data)
+
+            # Extract lists for separate handling if they exist in data
+            hobbies = data.pop('hobbies', None)
+            idiomas = data.pop('idiomas', None)
+            historial_trabajos = data.pop('historial_trabajos', None)
+
+            props_to_set = {k: v for k, v in data.items() if not isinstance(v, (list, dict)) or k == 'especializacion' or k == 'soft_skills' or k == 'valores_fundamentales' or k == 'motivadores' or k == 'colores_favoritos'}
+
+            if props_to_set:
+                set_clause = ", ".join([f"p.{k} = ${k}" for k in props_to_set.keys() if k != 'id'])
+                session.run(f"MATCH (p:Person {{id: $id}}) SET {set_clause}", **props_to_set)
+
+            # 2. For complex relationships, simplest strategy is DETACH old and RECREATE
+            # (In production we'd do incremental updates)
+            if hobbies is not None:
+                session.run("MATCH (p:Person {id: $pid})-[r:ENJOYS]->() DELETE r", pid=person_id)
+                for h in hobbies:
+                    session.run("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active}]->(x)",
+                                pid=person_id, nombre=h['nombre'], active=h.get('active', True))
+
+            if historial_trabajos is not None:
+                session.run("MATCH (p:Person {id: $pid})-[r:WORKED_AT]->() DELETE r", pid=person_id)
+                for j in historial_trabajos:
+                    session.run("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta}]->(c)",
+                                pid=person_id, **j)
+
             return self.get_by_id(person_id)
 
     def delete(self, person_id):
