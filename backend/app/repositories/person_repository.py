@@ -161,34 +161,77 @@ class PersonRepository:
 
     def update(self, person_id, data):
         with self.conn.get_session() as session:
-            # 1. Update basic properties
-            data['id'] = person_id
+            # Clean technical fields
+            data.pop('id', None)
+            data.pop('created_at', None)
             data['updated_at'] = datetime.utcnow().isoformat()
 
-            # Extract lists for separate handling if they exist in data
+            # Extract lists/dicts for relation handling
             hobbies = data.pop('hobbies', None)
             idiomas = data.pop('idiomas', None)
             historial_trabajos = data.pop('historial_trabajos', None)
+            educacion = data.pop('educacion', None)
+            metas = data.pop('metas', None)
+            tatuajes = data.pop('tatuajes', None)
 
-            props_to_set = {k: v for k, v in data.items() if not isinstance(v, (list, dict)) or k == 'especializacion' or k == 'soft_skills' or k == 'valores_fundamentales' or k == 'motivadores' or k == 'colores_favoritos'}
+            genero_nombre = data.pop('genero', None)
+            profesion_nombre = data.pop('profesion', None)
+            ciudad_residencia = data.pop('ciudad_residencia', None)
+            pais_residencia = data.pop('pais_residencia', None)
+            ciudad_nacimiento = data.pop('ciudad_nacimiento', None)
+            pais_nacimiento = data.pop('pais_nacimiento', None)
 
+            # 1. Update basic Person node properties
+            props_to_set = {k: v for k, v in data.items() if not isinstance(v, (list, dict))}
             if props_to_set:
-                set_clause = ", ".join([f"p.{k} = ${k}" for k in props_to_set.keys() if k != 'id'])
-                session.run(f"MATCH (p:Person {{id: $id}}) SET {set_clause}", **props_to_set)
+                set_clause = ", ".join([f"p.{k} = ${k}" for k in props_to_set.keys()])
+                session.run(f"MATCH (p:Person {{id: $pid}}) SET {set_clause}", pid=person_id, **props_to_set)
 
-            # 2. For complex relationships, simplest strategy is DETACH old and RECREATE
-            # (In production we'd do incremental updates)
+            # 2. Update normalized nodes (MERGE strategy)
+            def update_rel(query, **kwargs):
+                session.run(query, pid=person_id, **kwargs)
+
+            if genero_nombre:
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:HAS_GENDER]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) MERGE (g:Gender {nombre: $nombre}) MERGE (p)-[:HAS_GENDER]->(g)", nombre=genero_nombre)
+
+            if profesion_nombre:
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:WORKS_AS]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) MERGE (pr:Profession {nombre: $nombre}) MERGE (p)-[:WORKS_AS]->(pr)", nombre=profesion_nombre)
+
+            if ciudad_residencia and pais_residencia:
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:LIVES_IN]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) MERGE (c:Country {nombre: $pais}) MERGE (ct:City {nombre: $ciudad}) MERGE (ct)-[:IN_COUNTRY]->(c) MERGE (p)-[:LIVES_IN]->(ct)", pais=pais_residencia, ciudad=ciudad_residencia)
+
+            if ciudad_nacimiento and pais_nacimiento:
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:BORN_IN]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) MERGE (c:Country {nombre: $pais}) MERGE (ct:City {nombre: $ciudad}) MERGE (ct)-[:IN_COUNTRY]->(c) MERGE (p)-[:BORN_IN]->(ct)", pais=pais_nacimiento, ciudad=ciudad_nacimiento)
+
+            # 3. Update complex lists (Detach & Recreate)
             if hobbies is not None:
-                session.run("MATCH (p:Person {id: $pid})-[r:ENJOYS]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid})-[r:ENJOYS]->() DELETE r")
                 for h in hobbies:
-                    session.run("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active}]->(x)",
-                                pid=person_id, nombre=h['nombre'], active=h.get('active', True))
+                    update_rel("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active}]->(x)", nombre=h['nombre'], active=h.get('active', True))
 
             if historial_trabajos is not None:
-                session.run("MATCH (p:Person {id: $pid})-[r:WORKED_AT]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid})-[r:WORKED_AT]->() DELETE r")
                 for j in historial_trabajos:
-                    session.run("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta}]->(c)",
-                                pid=person_id, **j)
+                    update_rel("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta}]->(c)", **j)
+
+            if idiomas is not None:
+                update_rel("MATCH (p:Person {id: $pid})-[r:SPEAKS]->() DELETE r")
+                for l in idiomas:
+                    update_rel("MATCH (p:Person {id: $pid}) MERGE (x:Language {nombre: $nombre}) MERGE (p)-[:SPEAKS {nivel: $nivel}]->(x)", nombre=l['nombre'], nivel=l.get('nivel'))
+
+            if metas is not None:
+                update_rel("MATCH (p:Person {id: $pid})-[r:HAS_GOAL]->(g) DETACH DELETE g")
+                for g in metas:
+                    update_rel("MATCH (p:Person {id: $pid}) CREATE (x:Goal {tipo: $tipo, descripcion: $descripcion, desde: $desde, hasta: $hasta, estado: $estado}) CREATE (p)-[:HAS_GOAL]->(x)", **g)
+
+            if tatuajes is not None:
+                update_rel("MATCH (p:Person {id: $pid})-[r:HAS_TATTOO]->(t) DETACH DELETE t")
+                if tatuajes.get('tiene_tatuajes'):
+                    update_rel("MATCH (p:Person {id: $pid}) CREATE (x:Tattoo {descripcion: $descripcion, estilo: $estilo, significado: $significado, cantidad: $cantidad}) CREATE (p)-[:HAS_TATTOO]->(x)", **tatuajes)
 
             return self.get_by_id(person_id)
 

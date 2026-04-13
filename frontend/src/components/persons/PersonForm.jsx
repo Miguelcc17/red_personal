@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPerson, updatePerson } from '../../api/personsApi';
-import { Plus, Trash2, Hash, MapPin, Briefcase, Star, Building, Target, Globe, Save, X } from 'lucide-react';
+import { Plus, Trash2, Hash, MapPin, Briefcase, Star, Building, Target, Globe, Save, X, Loader2 } from 'lucide-react';
 
 const PersonForm = ({ onCreated, initialData, onCancel }) => {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '', apellido: '', fecha_nacimiento: '',
     signo_zodiacal: '', eneagrama: '', genero: '',
@@ -28,7 +29,8 @@ const PersonForm = ({ onCreated, initialData, onCancel }) => {
         valores_fundamentales: initialData.valores_fundamentales || [],
         idiomas: initialData.idiomas || [],
         educacion: initialData.educacion || [],
-        metas: initialData.metas || []
+        metas: initialData.metas || [],
+        tatuajes: initialData.tatuajes || { tiene_tatuajes: false, descripcion: '', estilo: '', significado: '', cantidad: 0 }
       });
     }
   }, [initialData]);
@@ -66,75 +68,85 @@ const PersonForm = ({ onCreated, initialData, onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
+      // Create clean payload (remove elementId and other read-only technical fields)
+      const { id, created_at, updated_at, nombre_completo, edad, ...cleanPayload } = formData;
+
       if (initialData?.id) {
-        await updatePerson(initialData.id, formData);
+        await updatePerson(initialData.id, cleanPayload);
       } else {
-        await createPerson(formData);
+        await createPerson(cleanPayload);
       }
       onCreated();
     } catch (err) {
       console.error(err);
-      alert('Error saving person.');
+      alert('Error al guardar el perfil. Por favor, revisa la consola.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12 bg-white p-12 rounded-3xl border border-slate-200 shadow-2xl mb-16 max-w-6xl mx-auto overflow-hidden text-slate-900 animate-in fade-in duration-500">
-      <div className="flex justify-between items-start border-b border-gray-100 pb-6">
+    <form onSubmit={handleSubmit} className={`space-y-12 bg-white p-12 rounded-[3rem] border-2 border-slate-100 shadow-2xl mb-16 max-w-6xl mx-auto overflow-hidden text-slate-900 transition-all ${loading ? 'opacity-50 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+      <div className="flex justify-between items-start border-b border-slate-50 pb-8">
         <div>
           <h2 className="text-4xl font-black text-slate-900 tracking-tight">
             {initialData ? 'Editar Perfil Analítico' : 'Nuevo Perfil de Análisis'}
           </h2>
-          <p className="text-slate-500 mt-2 text-lg font-medium">Gestiona los metadatos y la trayectoria en el grafo.</p>
+          <p className="text-slate-500 mt-2 text-lg font-medium italic">Sincronización directa con el grafo de red.</p>
         </div>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="p-2 text-slate-400 hover:text-red-500 bg-slate-50 rounded-xl transition-colors">
-            <X size={24} />
+          <button type="button" onClick={onCancel} className="p-3 text-slate-400 hover:text-red-500 bg-slate-50 rounded-2xl transition-all">
+            <X size={28} />
           </button>
         )}
       </div>
 
+      {/* Identidad */}
       <section className="space-y-6">
         <div className="flex items-center space-x-3 text-indigo-700 font-black uppercase tracking-widest text-xs">
-          <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center"><Hash size={16}/></div>
-          <span>Identidad y Contacto</span>
+          <Hash size={20}/> <span>Identidad Base</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <input name="nombre" value={formData.nombre} placeholder="Nombre" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="apellido" value={formData.apellido} placeholder="Apellido" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="fecha_nacimiento" value={formData.fecha_nacimiento} type="date" onChange={handleChange} className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="email" value={formData.email} type="email" placeholder="Email" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="telefono" value={formData.telefono} placeholder="Teléfono" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <select name="genero" value={formData.genero} onChange={handleChange} className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm">
-            <option value="">Género...</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Femenino">Femenino</option>
-            <option value="Otro">Otro</option>
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
+            <input name="nombre" value={formData.nombre} onChange={handleChange} required className="w-full border-2 border-slate-100 p-4 rounded-2xl focus:border-indigo-500 outline-none transition-all font-bold" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Apellido</label>
+            <input name="apellido" value={formData.apellido} onChange={handleChange} required className="w-full border-2 border-slate-100 p-4 rounded-2xl focus:border-indigo-500 outline-none transition-all font-bold" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
+            <input name="email" value={formData.email} type="email" onChange={handleChange} required className="w-full border-2 border-slate-100 p-4 rounded-2xl focus:border-indigo-500 outline-none transition-all font-bold" />
+          </div>
         </div>
       </section>
 
+      {/* Trajectory */}
       <section className="space-y-6">
         <div className="flex items-center space-x-3 text-indigo-700 font-black uppercase tracking-widest text-xs">
-          <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center"><Briefcase size={16}/></div>
-          <span>Trayectoria Profesional</span>
+          <Briefcase size={20}/> <span>Trayectoria Profesional</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <input name="profesion" value={formData.profesion} placeholder="Profesión" onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm" />
-          <input name="rol_actual" value={formData.rol_actual} placeholder="Rol Actual" onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm" />
-          <select name="modelo_trabajo" value={formData.modelo_trabajo} onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm appearance-none cursor-pointer">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <input name="profesion" value={formData.profesion} placeholder="Profesión Principal" onChange={handleChange} className="border-2 border-slate-100 p-4 rounded-2xl font-bold" />
+          <input name="rol_actual" value={formData.rol_actual} placeholder="Rol Actual" onChange={handleChange} className="border-2 border-slate-100 p-4 rounded-2xl font-bold" />
+          <select name="modelo_trabajo" value={formData.modelo_trabajo} onChange={handleChange} className="border-2 border-slate-100 p-4 rounded-2xl font-bold bg-white text-slate-900 cursor-pointer outline-none focus:border-indigo-500">
             <option value="remoto">Remoto</option>
             <option value="hibrido">Híbrido</option>
             <option value="presencial">Presencial</option>
+            <option value="freelance">Freelance</option>
+            <option value="in_house">In House</option>
+            <option value="emprendedor">Emprendedor</option>
           </select>
         </div>
       </section>
 
-      <div className="pt-10 border-t border-slate-100">
-        <button type="submit" className="w-full bg-indigo-600 text-white py-6 rounded-3xl font-black text-2xl uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-100 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-4">
-          <Save size={28} />
-          <span>{initialData ? 'Actualizar Perfil' : 'Generar Perfil Analítico'}</span>
+      <div className="pt-10 border-t border-slate-50">
+        <button type="submit" className="w-full bg-indigo-600 text-white py-6 rounded-[2rem] font-black text-2xl uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-100 flex items-center justify-center space-x-4">
+          {loading ? <Loader2 className="animate-spin" size={32} /> : <Save size={32} />}
+          <span>{initialData ? 'Actualizar Cambios en el Grafo' : 'Confirmar Generación de Perfil'}</span>
         </button>
       </div>
     </form>
