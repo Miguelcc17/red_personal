@@ -159,7 +159,17 @@ class PersonRepository:
 
             return self._convert_neo4j_types(data)
 
+    def _normalize_nulls(self, data):
+        if isinstance(data, dict):
+            return {k: self._normalize_nulls(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._normalize_nulls(i) for i in data]
+        elif data == "":
+            return None
+        return data
+
     def update(self, person_id, data):
+        data = self._normalize_nulls(data)
         with self.conn.get_session() as session:
             # Clean technical fields
             data.pop('id', None)
@@ -182,41 +192,55 @@ class PersonRepository:
             pais_nacimiento = data.pop('pais_nacimiento', None)
 
             # 1. Update basic Person node properties
-            props_to_set = {k: v for k, v in data.items() if not isinstance(v, (list, dict))}
+            # Neo4j supports lists of primitives as properties, but not lists of dicts
+            props_to_set = {k: v for k, v in data.items() if not isinstance(v, dict)}
             if props_to_set:
-                set_clause = ", ".join([f"p.{k} = ${k}" for k in props_to_set.keys()])
-                session.run(f"MATCH (p:Person {{id: $pid}}) SET {set_clause}", pid=person_id, **props_to_set)
+                session.run("MATCH (p:Person {id: $pid}) SET p += $props", pid=person_id, props=props_to_set)
 
-            # 2. Update normalized nodes (MERGE strategy)
+            # 2. Update normalized nodes
             def update_rel(query, **kwargs):
+                # Safety: ensure pid is not in kwargs to avoid multiple values error
+                kwargs.pop('pid', None)
                 session.run(query, pid=person_id, **kwargs)
 
             if genero_nombre:
-                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:HAS_GENDER]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:HAS_GENDER]->() DELETE r")
                 update_rel("MATCH (p:Person {id: $pid}) MERGE (g:Gender {nombre: $nombre}) MERGE (p)-[:HAS_GENDER]->(g)", nombre=genero_nombre)
 
             if profesion_nombre:
-                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:WORKS_AS]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:WORKS_AS]->() DELETE r")
                 update_rel("MATCH (p:Person {id: $pid}) MERGE (pr:Profession {nombre: $nombre}) MERGE (p)-[:WORKS_AS]->(pr)", nombre=profesion_nombre)
 
             if ciudad_residencia and pais_residencia:
-                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:LIVES_IN]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:LIVES_IN]->() DELETE r")
                 update_rel("MATCH (p:Person {id: $pid}) MERGE (c:Country {nombre: $pais}) MERGE (ct:City {nombre: $ciudad}) MERGE (ct)-[:IN_COUNTRY]->(c) MERGE (p)-[:LIVES_IN]->(ct)", pais=pais_residencia, ciudad=ciudad_residencia)
 
             if ciudad_nacimiento and pais_nacimiento:
-                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:BORN_IN]->() DELETE r", pid=person_id)
+                update_rel("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[r:BORN_IN]->() DELETE r")
                 update_rel("MATCH (p:Person {id: $pid}) MERGE (c:Country {nombre: $pais}) MERGE (ct:City {nombre: $ciudad}) MERGE (ct)-[:IN_COUNTRY]->(c) MERGE (p)-[:BORN_IN]->(ct)", pais=pais_nacimiento, ciudad=ciudad_nacimiento)
 
-            # 3. Update complex lists (Detach & Recreate)
+            # 3. Update complex lists
             if hobbies is not None:
                 update_rel("MATCH (p:Person {id: $pid})-[r:ENJOYS]->() DELETE r")
                 for h in hobbies:
-                    update_rel("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active}]->(x)", nombre=h['nombre'], active=h.get('active', True))
+                    if not h.get('nombre'): continue
+                    update_rel("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active, categoria: $categoria, descripcion: $descripcion}]->(x)",
+                               nombre=h['nombre'],
+                               active=h.get('active', True),
+                               categoria=h.get('categoria'),
+                               descripcion=h.get('descripcion'))
 
             if historial_trabajos is not None:
                 update_rel("MATCH (p:Person {id: $pid})-[r:WORKED_AT]->() DELETE r")
                 for j in historial_trabajos:
-                    update_rel("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta}]->(c)", **j)
+                    if not j.get('empresa'): continue
+                    update_rel("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta, actual: $actual, modalidad: $modalidad, descripcion: $descripcion, industria: $industria}]->(c)", **j)
+
+            if educacion is not None:
+                update_rel("MATCH (p:Person {id: $pid})-[r:STUDIED_AT]->() DELETE r")
+                for e in educacion:
+                    if not e.get('institucion'): continue
+                    update_rel("MATCH (p:Person {id: $pid}) MERGE (i:Institution {nombre: $institucion}) CREATE (p)-[:STUDIED_AT {titulo: $titulo, area: $area, desde: $desde, hasta: $hasta, actual: $actual}]->(i)", **e)
 
             if idiomas is not None:
                 update_rel("MATCH (p:Person {id: $pid})-[r:SPEAKS]->() DELETE r")
