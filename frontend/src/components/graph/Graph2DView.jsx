@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 
-const Graph2DView = ({ data, onNodeClick, onLinkClick }) => {
+const Graph2DView = React.memo(({ data, onNodeClick, onLinkClick }) => {
   const fgRef = useRef();
 
   const getLinkColor = (link) => {
@@ -43,6 +43,6 @@ const Graph2DView = ({ data, onNodeClick, onLinkClick }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Graph2DView;

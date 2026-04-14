@@ -1,7 +1,7 @@
 import React from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
 
-const Graph3DView = ({ data, onNodeClick, onLinkClick }) => {
+const Graph3DView = React.memo(({ data, onNodeClick, onLinkClick }) => {
   return (
     <div className="w-full h-full relative group">
       <ForceGraph3D
@@ -33,6 +33,6 @@ const Graph3DView = ({ data, onNodeClick, onLinkClick }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Graph3DView;

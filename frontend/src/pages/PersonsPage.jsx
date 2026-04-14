@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PageContainer from '../components/layout/PageContainer';
 import { usePersons } from '../hooks/usePersons';
 import { deletePerson, getPerson } from '../api/personsApi';
@@ -32,10 +32,13 @@ const PersonsPage = () => {
     }
   };
 
-  const filteredPersons = persons.filter(p =>
-    `${p.nombre} ${p.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.profesion && p.profesion.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredPersons = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return persons.filter(p =>
+      `${p.nombre} ${p.apellido}`.toLowerCase().includes(term) ||
+      (p.profesion && p.profesion.toLowerCase().includes(term))
+    );
+  }, [persons, searchTerm]);
 
   return (
     <PageContainer title="Gestión de Personas">
