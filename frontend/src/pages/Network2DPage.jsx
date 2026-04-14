@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Navbar from '../components/layout/Navbar';
 import { useGraphData } from '../hooks/useGraph';
 import Graph2DView from '../components/graph/Graph2DView';
@@ -18,15 +18,15 @@ const Network2DPage = () => {
     <div className="flex bg-slate-50 min-h-screen"><Navbar /><div className="flex-1 ml-72 flex items-center justify-center"><Loader /></div></div>
   );
 
-  const handleNodeClick = (node) => {
+  const handleNodeClick = useCallback((node) => {
     setSelectedLink(null);
     setSelectedNode(node);
-  };
+  }, []);
 
-  const handleLinkClick = (link) => {
+  const handleLinkClick = useCallback((link) => {
     setSelectedNode(null);
     setSelectedLink(link);
-  };
+  }, []);
 
   return (
     <div className="flex bg-white min-h-screen overflow-hidden">
