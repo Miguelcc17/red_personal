@@ -1,0 +1,1 @@
+## 2024-04-16 - Prevent O(n^2) renders in list iterations\n**Learning:** Found a classic performance bottleneck where `Array.find()` was used inside a render loop to resolve relationship names, resulting in O(n^2) complexity. This codebase pattern should be avoided.\n**Action:** Create an O(1) hash map using `useMemo` and perform lookups against it instead of using `.find()`.
