@@ -82,8 +82,18 @@ const RelationshipsPage = () => {
     setFormData({ p1_id: '', p2_id: '', tipo_relacion: 'amigo', descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0], hasta: '', estado: 'activa', bitacora: [] });
   };
 
+  // ⚡ Bolt: Create an O(1) lookup map for persons to prevent O(n) find operations during render
+  const personsMap = useMemo(() => {
+    const map = {};
+    persons.forEach(p => {
+      map[p.id] = p;
+    });
+    return map;
+  }, [persons]);
+
   const getPersonName = (id) => {
-    const p = persons.find(per => per.id === id);
+    // ⚡ Bolt: Replaced O(n) persons.find with O(1) hash map lookup
+    const p = personsMap[id];
     return p ? `${p.nombre} ${p.apellido}` : 'Desconocido';
   };
 
