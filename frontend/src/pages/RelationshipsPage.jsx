@@ -56,6 +56,14 @@ const RelationshipsPage = () => {
 
   const [logInput, setLogInput] = useState({ fecha: new Date().toISOString().split('T')[0], evento: '', comentario: '' });
 
+  // ⚡ Bolt: Create O(1) lookup map to prevent O(N) Array.find calls during render loop.
+  // Reduces O(N * M) rendering complexity when relationships list grows.
+  const personsMap = useMemo(() => {
+    const map = new Map();
+    persons.forEach(p => map.set(p.id, p));
+    return map;
+  }, [persons]);
+
   const filteredSource = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes('')), [persons]);
   const filteredTarget = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes('')), [persons]);
   const selectedTypeObj = useMemo(() => RELATIONSHIP_TYPES.find(t => t.id === formData.tipo_relacion), [formData.tipo_relacion]);
@@ -83,7 +91,8 @@ const RelationshipsPage = () => {
   };
 
   const getPersonName = (id) => {
-    const p = persons.find(per => per.id === id);
+    // ⚡ Bolt: Fast O(1) lookup for relationship names
+    const p = personsMap.get(id);
     return p ? `${p.nombre} ${p.apellido}` : 'Desconocido';
   };
 
