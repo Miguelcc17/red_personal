@@ -56,9 +56,14 @@ const RelationshipsPage = () => {
 
   const [logInput, setLogInput] = useState({ fecha: new Date().toISOString().split('T')[0], evento: '', comentario: '' });
 
+  // ⚡ Bolt Optimization: Pre-compute O(1) Maps for relational lookups
+  // Resolves O(n²) bottleneck when mapping large arrays inside render loops
+  const personsMap = useMemo(() => new Map(persons.map(p => [p.id, p])), [persons]);
+  const relationshipTypesMap = useMemo(() => new Map(RELATIONSHIP_TYPES.map(t => [t.id, t])), []);
+
   const filteredSource = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes('')), [persons]);
   const filteredTarget = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes('')), [persons]);
-  const selectedTypeObj = useMemo(() => RELATIONSHIP_TYPES.find(t => t.id === formData.tipo_relacion), [formData.tipo_relacion]);
+  const selectedTypeObj = useMemo(() => relationshipTypesMap.get(formData.tipo_relacion), [formData.tipo_relacion, relationshipTypesMap]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,7 +88,7 @@ const RelationshipsPage = () => {
   };
 
   const getPersonName = (id) => {
-    const p = persons.find(per => per.id === id);
+    const p = personsMap.get(id);
     return p ? `${p.nombre} ${p.apellido}` : 'Desconocido';
   };
 
@@ -240,7 +245,7 @@ const RelationshipsPage = () => {
                 <div className="flex flex-wrap gap-6 mt-4 text-[10px] text-slate-400 font-black uppercase tracking-widest">
                   <div className="flex items-center space-x-2 bg-indigo-50 px-4 py-2 rounded-2xl text-indigo-700 border border-indigo-100">
                     <Star size={14} className="fill-current" />
-                    <span>{RELATIONSHIP_TYPES.find(t=>t.id===rel.tipo_relacion)?.label || rel.tipo_relacion} • {rel.nivel_confianza}/5</span>
+                    <span>{relationshipTypesMap.get(rel.tipo_relacion)?.label || rel.tipo_relacion} • {rel.nivel_confianza}/5</span>
                   </div>
                   <div className={`flex items-center space-x-2 px-4 py-2 rounded-2xl border shadow-sm ${rel.estado === 'activa' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
                     <Clock size={14} /> <span>{rel.estado}</span>
