@@ -71,8 +71,6 @@ const RelationshipsPage = () => {
     return map;
   }, []);
 
-  const filteredSource = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes('')), [persons]);
-  const filteredTarget = useMemo(() => persons.filter(p => `${p.nombre} ${p.apellido}`.toLowerCase().includes('')), [persons]);
   const selectedTypeObj = useMemo(() => relationshipTypesMap.get(formData.tipo_relacion), [formData.tipo_relacion, relationshipTypesMap]);
 
   const handleSubmit = async (e) => {
