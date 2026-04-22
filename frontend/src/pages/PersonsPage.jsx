@@ -33,6 +33,7 @@ const PersonsPage = () => {
   };
 
   const filteredPersons = useMemo(() => {
+    if (!searchTerm) return persons; // ⚡ Bolt: Early return when search is empty to avoid O(N) iteration
     const term = searchTerm.toLowerCase();
     return persons.filter(p =>
       `${p.nombre} ${p.apellido}`.toLowerCase().includes(term) ||
