@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PageContainer from '../components/layout/PageContainer';
 import { usePersons } from '../hooks/usePersons';
 import { useRelationships } from '../hooks/useRelationships';
@@ -26,11 +26,15 @@ const Dashboard = () => {
 
   if (pLoading || rLoading || gLoading) return <PageContainer title="Dashboard"><Loader /></PageContainer>;
 
-  const stats = [
+  // ⚡ Bolt: Memoize stats to avoid recreating the array and elements on every render
+  const stats = useMemo(() => [
     { label: 'Personas en Red', value: persons.length, icon: <Users className="text-blue-500" /> },
     { label: 'Relaciones Totales', value: relationships.length, icon: <Share2 className="text-green-500" /> },
     { label: 'Nodos en Grafo', value: graphData.nodes.length, icon: <Network className="text-purple-500" /> },
-  ];
+  ], [persons.length, relationships.length, graphData.nodes.length]);
+
+  // ⚡ Bolt: Memoize recent persons to avoid slicing on every render
+  const recentPersons = useMemo(() => persons.slice(0, 5), [persons]);
 
   return (
     <PageContainer title="Análisis de Red Personal">
@@ -71,7 +75,7 @@ const Dashboard = () => {
         <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
           <h3 className="text-xl font-black text-gray-800 mb-6 uppercase tracking-tight">Individuos Recientes</h3>
           <div className="space-y-4">
-            {persons.slice(0, 5).map(p => (
+            {recentPersons.map(p => (
               <div key={p.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-50 group hover:bg-white hover:shadow-lg transition-all">
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 font-bold uppercase">{p.nombre[0]}</div>
