@@ -9,3 +9,6 @@
 ## 2024-05-25 - Prevent inline array recreation and slicing during render
 **Learning:** Found components (e.g. `Dashboard.jsx`) defining static arrays and performing slicing (e.g., `persons.slice(0, 5)`) inline during render. This allocates new arrays on every render cycle, which can cause unnecessary re-renders of child components even if data hasn't changed.
 **Action:** Wrap inline array generation and slice operations in `useMemo` with appropriate dependency arrays to preserve reference equality across renders.
+## 2024-04-25 - [React.memo and useCallback optimization]
+**Learning:** Adding React.memo() to a list component is ineffective if the parent passes down unstable function references (like a fetch data function generated inside a custom hook).
+**Action:** Always verify that functional props passed to memoized components are wrapped in useCallback() all the way up the chain, including internal hook methods like `fetchPersons`.

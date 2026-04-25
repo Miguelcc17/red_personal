@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getPersons } from '../api/personsApi';
 
 export const usePersons = () => {
@@ -6,7 +6,7 @@ export const usePersons = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchPersons = async () => {
+  const fetchPersons = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getPersons();
@@ -16,11 +16,11 @@ export const usePersons = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPersons();
-  }, []);
+  }, [fetchPersons]);
 
   return { persons, loading, error, fetchPersons };
 };

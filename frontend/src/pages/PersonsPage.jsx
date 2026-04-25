@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import PageContainer from '../components/layout/PageContainer';
 import { usePersons } from '../hooks/usePersons';
 import { deletePerson, getPerson } from '../api/personsApi';
@@ -13,14 +13,14 @@ const PersonsPage = () => {
   const [editingPerson, setEditingPerson] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta persona?')) {
       await deletePerson(id);
       fetchPersons();
     }
-  };
+  }, [fetchPersons]);
 
-  const handleEdit = async (person) => {
+  const handleEdit = useCallback(async (person) => {
     try {
       // Fetch full person data before editing to ensure related nodes are included
       const fullData = await getPerson(person.id);
@@ -30,7 +30,7 @@ const PersonsPage = () => {
     } catch (err) {
       alert('Error al recuperar datos de la persona.');
     }
-  };
+  }, []);
 
   const filteredPersons = useMemo(() => {
     if (!searchTerm) return persons; // ⚡ Bolt: Early return when search is empty to avoid O(N) iteration
