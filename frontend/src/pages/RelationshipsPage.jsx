@@ -88,6 +88,8 @@ const RelationshipsPage = () => {
     }
   };
 
+  const filteredPersonsStep2 = useMemo(() => persons.filter(p => p.id !== formData.p1_id), [persons, formData.p1_id]);
+
   const resetForm = () => {
     setShowForm(false);
     setEditingRel(null);
@@ -224,7 +226,7 @@ const RelationshipsPage = () => {
             {step === 2 && (
               <div className="animate-in fade-in zoom-in-95">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-h-[500px] overflow-y-auto p-6 scrollbar-hide">
-                  {persons.filter(p=>p.id !== formData.p1_id).map(p => (
+                  {filteredPersonsStep2.map(p => (
                     <button key={p.id} onClick={()=>{ setFormData({...formData, p2_id: p.id}); setStep(3); }} className="p-8 rounded-[2.5rem] border-2 border-slate-50 bg-slate-50 hover:border-indigo-600 transition-all flex flex-col items-center space-y-4 shadow-sm hover:shadow-xl hover:scale-105">
                       <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-indigo-600 text-xl font-black uppercase">{p.nombre[0]}{p.apellido[0]}</div>
                       <span className="text-xs font-black uppercase text-slate-800 text-center">{p.nombre} {p.apellido}</span>
