@@ -12,3 +12,7 @@
 ## 2024-04-25 - [React.memo and useCallback optimization]
 **Learning:** Adding React.memo() to a list component is ineffective if the parent passes down unstable function references (like a fetch data function generated inside a custom hook).
 **Action:** Always verify that functional props passed to memoized components are wrapped in useCallback() all the way up the chain, including internal hook methods like `fetchPersons`.
+
+## 2024-04-26 - Memoization of Graph Link Color Callbacks
+**Learning:** In the `react-force-graph` ecosystem (`react-force-graph-2d` and `react-force-graph-3d`), passing an inline function or dynamically created callback to props like `linkColor` breaks the component's internal memoization. Since these are heavy WebGL/Canvas components, providing an unstable function reference triggers expensive child re-renders on every parent update, causing severe performance degradation during simple state changes.
+**Action:** Always extract functional props intended for graph components into stable references using `useCallback` (or `useMemo` if returning an object/array) with an appropriate dependency array, typically `[]` for static evaluators.

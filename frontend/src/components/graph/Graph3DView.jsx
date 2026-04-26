@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
 
 const Graph3DView = React.memo(({ data, onNodeClick, onLinkClick }) => {
+  // ⚡ Bolt: Memoize the linkColor function using useCallback.
+  // Extracting inline functions from heavy components like ForceGraph3D
+  // prevents unnecessary WebGL re-renders caused by unstable function references.
+  const getLinkColor = useCallback(() => 'rgba(255,255,255,0.15)', []);
+
   return (
     <div className="w-full h-full relative group">
       <ForceGraph3D
@@ -11,7 +16,7 @@ const Graph3DView = React.memo(({ data, onNodeClick, onLinkClick }) => {
         nodeRelSize={7}
         linkDirectionalArrowLength={4}
         linkDirectionalArrowRelPos={1}
-        linkColor={() => 'rgba(255,255,255,0.15)'}
+        linkColor={getLinkColor}
         linkOpacity={0.3}
         onNodeClick={onNodeClick}
         onLinkClick={onLinkClick}

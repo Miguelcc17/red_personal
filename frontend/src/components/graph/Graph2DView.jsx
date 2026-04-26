@@ -1,10 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 
 const Graph2DView = React.memo(({ data, onNodeClick, onLinkClick }) => {
   const fgRef = useRef();
 
-  const getLinkColor = (link) => {
+  // ⚡ Bolt: Memoize the linkColor function using useCallback.
+  // Passing unstable function references to heavy components like ForceGraph2D
+  // causes expensive WebGL/Canvas re-renders and breaks internal memoizations.
+  const getLinkColor = useCallback((link) => {
     switch(link.label) {
       case 'amigo': return '#6366f1';
       case 'familiar': return '#10b981';
@@ -12,7 +15,7 @@ const Graph2DView = React.memo(({ data, onNodeClick, onLinkClick }) => {
       case 'pareja': return '#ef4444';
       default: return '#cbd5e1';
     }
-  };
+  }, []);
 
   return (
     <div className="w-full h-full bg-slate-50 relative">
