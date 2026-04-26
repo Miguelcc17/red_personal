@@ -1,7 +1,10 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Trash2, Edit2 } from 'lucide-react';
 
-const PersonCard = ({ person, onDelete, onEdit }) => {
+// ⚡ Bolt: Prevent unnecessary re-renders of list items using React.memo
+// This ensures that typing in the search bar or toggling the "Añadir Persona" form
+// doesn't trigger O(N) re-renders for every PersonCard in the grid.
+const PersonCard = React.memo(({ person, onDelete, onEdit }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-[2rem] p-6 hover:shadow-2xl hover:shadow-indigo-50 transition-all group relative overflow-hidden text-slate-900">
       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110" />
@@ -54,6 +57,6 @@ const PersonCard = ({ person, onDelete, onEdit }) => {
       )}
     </div>
   );
-};
+});
 
 export default PersonCard;
