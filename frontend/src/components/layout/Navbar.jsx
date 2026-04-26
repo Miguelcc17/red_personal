@@ -5,13 +5,13 @@ import { Home, Users, Share2, Network, Box } from 'lucide-react';
 const Navbar = () => {
   const location = useLocation();
 
-  const navItems = [
+  const navItems = React.useMemo(() => [
     { path: '/', label: 'Dashboard', icon: <Home size={22} /> },
     { path: '/persons', label: 'Individuos', icon: <Users size={22} /> },
     { path: '/relationships', label: 'Conexiones', icon: <Share2 size={22} /> },
     { path: '/network-2d', label: 'Mapa 2D', icon: <Network size={22} /> },
     { path: '/network-3d', label: 'Red 3D', icon: <Box size={22} /> },
-  ];
+  ], []);
 
   return (
     <nav className="bg-slate-900 text-white h-screen w-72 fixed left-0 top-0 flex flex-col shadow-2xl z-50 border-r border-slate-800">
