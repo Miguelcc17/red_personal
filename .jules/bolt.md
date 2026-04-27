@@ -12,3 +12,6 @@
 ## 2024-04-25 - [React.memo and useCallback optimization]
 **Learning:** Adding React.memo() to a list component is ineffective if the parent passes down unstable function references (like a fetch data function generated inside a custom hook).
 **Action:** Always verify that functional props passed to memoized components are wrapped in useCallback() all the way up the chain, including internal hook methods like `fetchPersons`.
+## 2024-05-26 - [React Hook Function Memoization]
+**Learning:** Found custom hooks (`useRelationships` and `useGraphData`) that exported fetch functions (`fetchRelationships`, `fetchGraph`) without wrapping them in `useCallback`. This is an anti-pattern as these functions are often passed as dependencies to `useEffect` or as props to child components, causing unnecessary re-renders or infinite loops when the hook's internal state updates.
+**Action:** Always wrap functions exported from custom hooks in `useCallback` to guarantee a stable reference across renders, especially when those functions trigger state updates within the hook.
