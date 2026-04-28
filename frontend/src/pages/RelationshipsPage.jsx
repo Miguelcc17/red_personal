@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import PageContainer from '../components/layout/PageContainer';
 import { useRelationships } from '../hooks/useRelationships';
 import { usePersons } from '../hooks/usePersons';
 import { createRelationship, updateRelationship, deleteRelationship } from '../api/relationshipsApi';
 import Loader from '../components/common/Loader';
 import { Plus, Share2, Trash2, Calendar, Star, ArrowRight, Search, Info, Clock, MessageSquare, History, Edit2, X, Save } from 'lucide-react';
+import RelationshipCard from '../components/persons/RelationshipCard';
 
 const RELATIONSHIP_TYPES = [
   { id: 'amigo', label: 'Amigo/a', trustLabel: 'Nivel de Amistad', help: 'Vínculo basado en afecto e historia común.' },
@@ -97,11 +98,22 @@ const RelationshipsPage = () => {
     setFormData({ p1_id: '', p2_id: '', tipo_relacion: 'amigo', descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0], hasta: '', estado: 'activa', bitacora: [] });
   };
 
-  const getPersonName = (id) => {
+  const getPersonName = useCallback((id) => {
     // ⚡ Bolt: Fast O(1) lookup for relationship names
     const p = personsMap.get(id);
     return p ? `${p.nombre} ${p.apellido}` : 'Desconocido';
-  };
+  }, [personsMap]);
+
+  const handleEditRel = useCallback((rel) => {
+    setEditingRel(rel);
+  }, []);
+
+  const handleDeleteRel = useCallback(async (id) => {
+    if(window.confirm('¿Eliminar vínculo?')) {
+      await deleteRelationship(id);
+      fetchRelationships();
+    }
+  }, [fetchRelationships]);
 
   if (rLoading || pLoading) return <PageContainer title="Relationships"><Loader /></PageContainer>;
 
@@ -241,34 +253,15 @@ const RelationshipsPage = () => {
 
       <div className="space-y-6">
         {relationships.map(rel => (
-          <div key={rel.id} className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex items-center justify-between hover:shadow-2xl hover:border-indigo-50 transition-all group animate-in fade-in duration-500">
-            <div className="flex items-center space-x-12">
-              <div className="flex -space-x-6 group-hover:-space-x-2 transition-all">
-                 <div className="w-16 h-16 bg-slate-900 text-white rounded-3xl flex items-center justify-center font-black border-4 border-white shadow-xl uppercase">{getPersonName(rel.p1_id)[0]}</div>
-                 <div className="w-16 h-16 bg-indigo-600 text-white rounded-3xl flex items-center justify-center font-black border-4 border-white shadow-xl uppercase">{getPersonName(rel.p2_id)[0]}</div>
-              </div>
-              <div className="text-slate-900">
-                <div className="flex items-center space-x-4">
-                  <span className="font-black text-xl tracking-tight">{getPersonName(rel.p1_id)}</span>
-                  <ArrowRight className="text-indigo-200" size={24} />
-                  <span className="font-black text-xl tracking-tight">{getPersonName(rel.p2_id)}</span>
-                </div>
-                <div className="flex flex-wrap gap-6 mt-4 text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                  <div className="flex items-center space-x-2 bg-indigo-50 px-4 py-2 rounded-2xl text-indigo-700 border border-indigo-100">
-                    <Star size={14} className="fill-current" />
-                    <span>{relationshipTypesMap.get(rel.tipo_relacion)?.label || rel.tipo_relacion} • {rel.nivel_confianza}/5</span>
-                  </div>
-                  <div className={`flex items-center space-x-2 px-4 py-2 rounded-2xl border shadow-sm ${rel.estado === 'activa' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
-                    <Clock size={14} /> <span>{rel.estado}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex space-x-2">
-              <button onClick={() => setEditingRel(rel)} className="p-5 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all rounded-[2rem]"><Edit2 size={24}/></button>
-              <button onClick={() => { if(window.confirm('¿Eliminar vínculo?')) deleteRelationship(rel.id).then(fetchRelationships); }} className="p-5 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-[2rem]"><Trash2 size={24}/></button>
-            </div>
-          </div>
+          <RelationshipCard
+            key={rel.id}
+            rel={rel}
+            p1Name={getPersonName(rel.p1_id)}
+            p2Name={getPersonName(rel.p2_id)}
+            typeLabel={relationshipTypesMap.get(rel.tipo_relacion)?.label || rel.tipo_relacion}
+            onEdit={handleEditRel}
+            onDelete={handleDeleteRel}
+          />
         ))}
       </div>
     </PageContainer>
