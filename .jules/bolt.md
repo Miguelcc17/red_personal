@@ -15,3 +15,7 @@
 ## 2024-05-26 - [React Hook Function Memoization]
 **Learning:** Found custom hooks (`useRelationships` and `useGraphData`) that exported fetch functions (`fetchRelationships`, `fetchGraph`) without wrapping them in `useCallback`. This is an anti-pattern as these functions are often passed as dependencies to `useEffect` or as props to child components, causing unnecessary re-renders or infinite loops when the hook's internal state updates.
 **Action:** Always wrap functions exported from custom hooks in `useCallback` to guarantee a stable reference across renders, especially when those functions trigger state updates within the hook.
+
+## 2024-05-27 - Inline array list rendering performance bottlenecks in React forms
+**Learning:** Found a major performance bottleneck where the `RelationshipsPage.jsx` had a form state (`formData`, `logInput`) driving updates on every keystroke. Because the entire list of connections was mapped inline inside this parent component without memoization, every keystroke triggered a full O(N) re-render of the list. This included re-triggering map lookups (`getPersonName`) inside the list items.
+**Action:** When a React page has large interactive lists alongside forms with frequently updating state (like keystrokes), always extract the list item into its own `<React.memo()>` component and wrap any handler functions (`onClick`, fetch callbacks, helper methods like `getPersonName`) passed to it in `useCallback()` to maintain referential equality and preserve the memoization barrier.
