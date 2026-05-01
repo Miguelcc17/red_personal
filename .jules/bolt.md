@@ -23,6 +23,6 @@
 **Learning:** In list rendering where each child element interacts with the state via functions constructed per-render using inline callbacks `onClick={() => ... }`, the resulting React Tree forces a top-down re-render cycle on every update, yielding O(N * (Updates)) rendering overhead.
 **Action:** Extract list items to smaller memoized components `React.memo` and provide handlers stabilized via `useCallback`, as done with `PersonSelectorCard` in `RelationshipsPage.jsx`.
 
-## 2024-05-01 - Prevent Input Lag on Client-Side Search
-**Learning:** Filtering large client-side arrays (like `persons` using `includes` on strings) directly inside `useMemo` depending on a live input state (`searchTerm`) causes the main thread to block and re-render child components on every keystroke, causing noticeable input lag as the list grows.
-**Action:** Always wrap search input values passed to expensive `useMemo` filtering functions with a custom `useDebounce` hook (e.g., 300ms) to delay the O(N) calculation until the user pauses typing.
+## 2024-05-30 - Hook Ordering and Early Returns
+**Learning:** Adding a `useMemo` hook (or any hook) after an early return block (like `if (loading) return <Loader />;`) violates the Rules of Hooks, resulting in a fatal `Minified React error #310` (Rendered more hooks than during the previous render) on subsequent renders.
+**Action:** Never place React hooks inside conditional render blocks, inline JSX expressions, or after early returns. Always declare all hooks at the top level of the component before any early return statements.
