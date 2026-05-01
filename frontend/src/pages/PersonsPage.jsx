@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import PageContainer from '../components/layout/PageContainer';
 import { usePersons } from '../hooks/usePersons';
+import { useDebounce } from '../hooks/useDebounce';
 import { deletePerson, getPerson } from '../api/personsApi';
 import PersonForm from '../components/persons/PersonForm';
 import PersonCard from '../components/persons/PersonCard';
@@ -12,6 +13,7 @@ const PersonsPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingPerson, setEditingPerson] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const handleDelete = useCallback(async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta persona?')) {
@@ -33,13 +35,16 @@ const PersonsPage = () => {
   }, []);
 
   const filteredPersons = useMemo(() => {
-    if (!searchTerm) return persons; // ⚡ Bolt: Early return when search is empty to avoid O(N) iteration
-    const term = searchTerm.toLowerCase();
+    if (!debouncedSearchTerm) return persons; // ⚡ Bolt: Early return when search is empty to avoid O(N) iteration
+
+    // ⚡ Bolt: Debouncing prevents expensive O(N) array filtering and subsequent
+    // child component re-renders on every single keystroke.
+    const term = debouncedSearchTerm.toLowerCase();
     return persons.filter(p =>
       `${p.nombre} ${p.apellido}`.toLowerCase().includes(term) ||
       (p.profesion && p.profesion.toLowerCase().includes(term))
     );
-  }, [persons, searchTerm]);
+  }, [persons, debouncedSearchTerm]);
 
   return (
     <PageContainer title="Gestión de Personas">
