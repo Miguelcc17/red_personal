@@ -6,6 +6,8 @@ import { useGraphData } from '../hooks/useGraph';
 import Loader from '../components/common/Loader';
 import { Users, Share2, Network, Database } from 'lucide-react';
 import axios from 'axios';
+import RecentPersonCard from '../components/persons/RecentPersonCard';
+import StatCard from '../components/dashboard/StatCard';
 
 const Dashboard = () => {
   const { persons, loading: pLoading, fetchPersons } = usePersons();
@@ -24,8 +26,6 @@ const Dashboard = () => {
     }
   };
 
-  if (pLoading || rLoading || gLoading) return <PageContainer title="Dashboard"><Loader /></PageContainer>;
-
   // ⚡ Bolt: Memoize stats to avoid recreating the array and elements on every render
   const stats = useMemo(() => [
     { label: 'Personas en Red', value: persons.length, icon: <Users className="text-blue-500" /> },
@@ -35,6 +35,8 @@ const Dashboard = () => {
 
   // ⚡ Bolt: Memoize recent persons to avoid slicing on every render
   const recentPersons = useMemo(() => persons.slice(0, 5), [persons]);
+
+  if (pLoading || rLoading || gLoading) return <PageContainer title="Dashboard"><Loader /></PageContainer>;
 
   return (
     <PageContainer title="Análisis de Red Personal">
@@ -46,13 +48,7 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-8 rounded-3xl border border-gray-50 shadow-sm flex items-center space-x-6 hover:shadow-xl hover:shadow-indigo-50/50 transition-all group">
-            <div className="p-4 bg-gray-50 rounded-2xl group-hover:scale-110 transition-transform">{stat.icon}</div>
-            <div>
-              <p className="text-xs text-gray-400 font-black uppercase tracking-widest">{stat.label}</p>
-              <h4 className="text-3xl font-black text-gray-900 mt-1">{stat.value}</h4>
-            </div>
-          </div>
+          <StatCard key={i} stat={stat} />
         ))}
       </div>
 
@@ -76,16 +72,7 @@ const Dashboard = () => {
           <h3 className="text-xl font-black text-gray-800 mb-6 uppercase tracking-tight">Individuos Recientes</h3>
           <div className="space-y-4">
             {recentPersons.map(p => (
-              <div key={p.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-50 group hover:bg-white hover:shadow-lg transition-all">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 font-bold uppercase">{p.nombre[0]}</div>
-                  <div>
-                    <span className="font-black text-gray-700 block text-sm">{p.nombre} {p.apellido}</span>
-                    <span className="text-[10px] text-indigo-400 font-black uppercase tracking-tighter">{p.profesion || 'Analista'}</span>
-                  </div>
-                </div>
-                <div className="text-[10px] text-gray-300 font-bold">{p.ciudad_residencia || 'SCL'}</div>
-              </div>
+              <RecentPersonCard key={p.id} person={p} />
             ))}
             {persons.length === 0 && <p className="text-gray-400 text-center py-10 italic font-medium">No hay individuos registrados aún.</p>}
           </div>
