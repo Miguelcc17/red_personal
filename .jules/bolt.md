@@ -22,3 +22,7 @@
 ## 2024-05-18 - Extracted React.memo PersonSelectorCard
 **Learning:** In list rendering where each child element interacts with the state via functions constructed per-render using inline callbacks `onClick={() => ... }`, the resulting React Tree forces a top-down re-render cycle on every update, yielding O(N * (Updates)) rendering overhead.
 **Action:** Extract list items to smaller memoized components `React.memo` and provide handlers stabilized via `useCallback`, as done with `PersonSelectorCard` in `RelationshipsPage.jsx`.
+
+## 2024-05-30 - Hook Ordering and Early Returns
+**Learning:** Adding a `useMemo` hook (or any hook) after an early return block (like `if (loading) return <Loader />;`) violates the Rules of Hooks, resulting in a fatal `Minified React error #310` (Rendered more hooks than during the previous render) on subsequent renders.
+**Action:** Never place React hooks inside conditional render blocks, inline JSX expressions, or after early returns. Always declare all hooks at the top level of the component before any early return statements.
