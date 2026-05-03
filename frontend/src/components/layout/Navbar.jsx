@@ -2,7 +2,10 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Users, Share2, Network, Box } from 'lucide-react';
 
-const Navbar = () => {
+// ⚡ Bolt: Wrap Navbar in React.memo to prevent the entire sidebar from re-rendering
+// on every keystroke when parent page state updates (e.g., search inputs in PersonsPage).
+// Since it has no props, it will only re-render when the location changes (via useLocation).
+const Navbar = React.memo(() => {
   const location = useLocation();
 
   const navItems = React.useMemo(() => [
@@ -50,6 +53,6 @@ const Navbar = () => {
       </div>
     </nav>
   );
-};
+});
 
 export default Navbar;
