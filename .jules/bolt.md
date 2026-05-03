@@ -26,3 +26,6 @@
 ## 2024-05-30 - Hook Ordering and Early Returns
 **Learning:** Adding a `useMemo` hook (or any hook) after an early return block (like `if (loading) return <Loader />;`) violates the Rules of Hooks, resulting in a fatal `Minified React error #310` (Rendered more hooks than during the previous render) on subsequent renders.
 **Action:** Never place React hooks inside conditional render blocks, inline JSX expressions, or after early returns. Always declare all hooks at the top level of the component before any early return statements.
+## 2024-06-03 - Filtering Optimization in Search Inputs
+**Learning:** Found an application-specific bottleneck where search inputs updating state on every keystroke (`onChange`) trigger full re-renders and costly `O(N)` filtering loops in `PersonsPage.jsx`. Because the filtering operations depend on `searchTerm`, the `useMemo` caching fails on every keystroke.
+**Action:** Extract a custom `useDebounce` hook to delay state changes passed to the filtering `useMemo` block. This reduces `O(N)` array operations during rapid typing without sacrificing perceived responsiveness.
