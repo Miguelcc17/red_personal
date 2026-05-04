@@ -2,7 +2,11 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Users, Share2, Network, Box } from 'lucide-react';
 
-const Navbar = () => {
+// ⚡ Bolt: Prevent unnecessary re-renders of the static Navbar sibling component
+// when parent pages (like Network2DPage or Network3DPage) update their local state
+// (e.g., when a user clicks a node/link). Since Navbar does not accept `children` props
+// and only depends on route location, `React.memo` effectively blocks top-down re-renders.
+const Navbar = React.memo(() => {
   const location = useLocation();
 
   const navItems = React.useMemo(() => [
@@ -50,6 +54,6 @@ const Navbar = () => {
       </div>
     </nav>
   );
-};
+});
 
 export default Navbar;
