@@ -29,3 +29,6 @@
 ## 2024-06-03 - Filtering Optimization in Search Inputs
 **Learning:** Found an application-specific bottleneck where search inputs updating state on every keystroke (`onChange`) trigger full re-renders and costly `O(N)` filtering loops in `PersonsPage.jsx`. Because the filtering operations depend on `searchTerm`, the `useMemo` caching fails on every keystroke.
 **Action:** Extract a custom `useDebounce` hook to delay state changes passed to the filtering `useMemo` block. This reduces `O(N)` array operations during rapid typing without sacrificing perceived responsiveness.
+## 2024-06-03 - [React.memo on Static Sibling Layout Components]
+**Learning:** Found an application-specific architectural bottleneck in the frontend: `Navbar` is a static sibling component rendered alongside heavy page components like `Network2DPage` and `Network3DPage`. When users interact with the graph (e.g. clicking a node, updating parent component's local state `selectedNode`), it triggers a re-render of the entire page, including the `Navbar` component unnecessarily.
+**Action:** Always apply `React.memo` to static or sibling layout components that do not accept `children` props (e.g., `Navbar`) to prevent them from re-rendering when parent container states update.
