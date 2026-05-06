@@ -134,6 +134,36 @@ const RelationshipsPage = () => {
     }
   }, [fetchRelationships]);
 
+  // ⚡ Bolt: Memoize mapped relationship cards to prevent O(N) re-renders
+  // on every keystroke when typing in the form or bitácora.
+  const renderedRelationships = useMemo(() => (
+    relationships.map(rel => (
+      <RelationshipCard
+        key={rel.id}
+        rel={rel}
+        p1Name={getPersonName(rel.p1_id)}
+        p2Name={getPersonName(rel.p2_id)}
+        typeLabel={relationshipTypesMap.get(rel.tipo_relacion)?.label || rel.tipo_relacion}
+        onEdit={handleEditRel}
+        onDelete={handleDeleteRel}
+      />
+    ))
+  ), [relationships, getPersonName, relationshipTypesMap, handleEditRel, handleDeleteRel]);
+
+  // ⚡ Bolt: Memoize step 1 person cards
+  const renderedStep1Persons = useMemo(() => (
+    persons.map(p => (
+      <PersonSelectorCard key={p.id} person={p} onClick={handleSelectP1} />
+    ))
+  ), [persons, handleSelectP1]);
+
+  // ⚡ Bolt: Memoize step 2 person cards
+  const renderedStep2Persons = useMemo(() => (
+    filteredPersonsStep2.map(p => (
+      <PersonSelectorCard key={p.id} person={p} onClick={handleSelectP2} />
+    ))
+  ), [filteredPersonsStep2, handleSelectP2]);
+
   if (rLoading || pLoading) return <PageContainer title="Relationships"><Loader /></PageContainer>;
 
   return (
@@ -244,9 +274,7 @@ const RelationshipsPage = () => {
             {step === 1 && (
               <div className="animate-in fade-in zoom-in-95">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-h-[500px] overflow-y-auto p-6 scrollbar-hide">
-                  {persons.map(p => (
-                    <PersonSelectorCard key={p.id} person={p} onClick={handleSelectP1} />
-                  ))}
+                  {renderedStep1Persons}
                 </div>
               </div>
             )}
@@ -254,9 +282,7 @@ const RelationshipsPage = () => {
             {step === 2 && (
               <div className="animate-in fade-in zoom-in-95">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-h-[500px] overflow-y-auto p-6 scrollbar-hide">
-                  {filteredPersonsStep2.map(p => (
-                    <PersonSelectorCard key={p.id} person={p} onClick={handleSelectP2} />
-                  ))}
+                  {renderedStep2Persons}
                 </div>
               </div>
             )}
@@ -265,17 +291,7 @@ const RelationshipsPage = () => {
       )}
 
       <div className="space-y-6">
-        {relationships.map(rel => (
-          <RelationshipCard
-            key={rel.id}
-            rel={rel}
-            p1Name={getPersonName(rel.p1_id)}
-            p2Name={getPersonName(rel.p2_id)}
-            typeLabel={relationshipTypesMap.get(rel.tipo_relacion)?.label || rel.tipo_relacion}
-            onEdit={handleEditRel}
-            onDelete={handleDeleteRel}
-          />
-        ))}
+        {renderedRelationships}
       </div>
     </PageContainer>
   );

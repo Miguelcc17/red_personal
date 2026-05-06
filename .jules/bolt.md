@@ -32,3 +32,7 @@
 ## 2024-06-03 - [React.memo on Static Sibling Layout Components]
 **Learning:** Found an application-specific architectural bottleneck in the frontend: `Navbar` is a static sibling component rendered alongside heavy page components like `Network2DPage` and `Network3DPage`. When users interact with the graph (e.g. clicking a node, updating parent component's local state `selectedNode`), it triggers a re-render of the entire page, including the `Navbar` component unnecessarily.
 **Action:** Always apply `React.memo` to static or sibling layout components that do not accept `children` props (e.g., `Navbar`) to prevent them from re-rendering when parent container states update.
+
+## 2024-06-05 - Optimize inline array maps with useMemo in heavy forms
+**Learning:** In components handling local form state with frequent updates (like `searchTerm` updating on keystrokes in `PersonsPage.jsx` or `logInput` updating in `RelationshipsPage.jsx`), leaving `.map()` rendering operations inline forces React to re-evaluate and re-create `O(N)` elements on every state change, causing severe input lag.
+**Action:** When rendering arrays of React elements using `.map()` inside components that handle frequent local state updates, always wrap the entire mapping operation in a `useMemo` hook (e.g., `const renderedList = useMemo(() => data.map(...), [data])`) to prevent O(N) element recreation on unrelated state changes.

@@ -43,6 +43,19 @@ const PersonsPage = () => {
     );
   }, [persons, debouncedSearchTerm]);
 
+  // ⚡ Bolt: Memoize the mapping operation to avoid O(N) React element recreation
+  // on every keystroke when searchTerm updates (before debounce triggers).
+  const renderedPersonCards = useMemo(() => (
+    filteredPersons.map(person => (
+      <PersonCard
+        key={person.id}
+        person={person}
+        onDelete={handleDelete}
+        onEdit={handleEdit}
+      />
+    ))
+  ), [filteredPersons, handleDelete, handleEdit]);
+
   return (
     <PageContainer title="Gestión de Personas">
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
@@ -93,14 +106,7 @@ const PersonsPage = () => {
         <Loader />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPersons.map(person => (
-            <PersonCard
-              key={person.id}
-              person={person}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-            />
-          ))}
+          {renderedPersonCards}
           {filteredPersons.length === 0 && (
             <div className="col-span-full text-center py-32 text-slate-400 border-4 border-dashed border-slate-50 rounded-[3rem] font-medium italic">
               No se encontraron personas. Intenta añadir una nueva.
