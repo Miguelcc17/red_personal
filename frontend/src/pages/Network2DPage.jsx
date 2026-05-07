@@ -14,10 +14,6 @@ const Network2DPage = () => {
   const [selectedLink, setSelectedLink] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  if (loading) return (
-    <div className="flex bg-slate-50 min-h-screen"><Navbar /><div className="flex-1 ml-72 flex items-center justify-center"><Loader /></div></div>
-  );
-
   const handleNodeClick = useCallback((node) => {
     setSelectedLink(null);
     setSelectedNode(node);
@@ -27,6 +23,10 @@ const Network2DPage = () => {
     setSelectedNode(null);
     setSelectedLink(link);
   }, []);
+
+  if (loading) return (
+    <div className="flex bg-slate-50 min-h-screen"><Navbar /><div className="flex-1 ml-72 flex items-center justify-center"><Loader /></div></div>
+  );
 
   return (
     <div className="flex bg-white min-h-screen overflow-hidden">
