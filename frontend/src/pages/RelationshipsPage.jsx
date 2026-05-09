@@ -16,6 +16,14 @@ const PersonSelectorCard = React.memo(({ person, onClick }) => (
   </button>
 ));
 
+// ⚡ Bolt: Extract log item to prevent re-renders of the whole list
+const LogItem = React.memo(({ log, index, onDelete }) => (
+  <div className="bg-white p-3 rounded-xl border border-indigo-50 flex justify-between items-center group">
+     <div><p className="text-[9px] font-black text-indigo-400">{log.fecha}</p><p className="text-xs font-bold">{log.evento}</p></div>
+     <button type="button" onClick={() => onDelete(index)} className="text-slate-200 hover:text-red-500"><Trash2 size={12}/></button>
+  </div>
+));
+
 const RELATIONSHIP_TYPES = [
   { id: 'amigo', label: 'Amigo/a', trustLabel: 'Nivel de Amistad', help: 'Vínculo basado en afecto e historia común.' },
   { id: 'familiar', label: 'Familiar', trustLabel: 'Cercanía Familiar', help: 'Relación de parentesco biológico o legal.' },
@@ -164,6 +172,23 @@ const RelationshipsPage = () => {
     ))
   ), [filteredPersonsStep2, handleSelectP2]);
 
+  // ⚡ Bolt: Memoize the delete handler to preserve reference equality
+  const handleDeleteLog = useCallback((index) => {
+    setFormData(prev => {
+      const n = [...prev.bitacora];
+      n.splice(index, 1);
+      return { ...prev, bitacora: n };
+    });
+  }, []);
+
+  // ⚡ Bolt: Wrap mapping in useMemo to avoid O(N) element recreation on every keystroke
+  const renderedBitacora = useMemo(() => {
+    if (!formData?.bitacora) return null;
+    return formData.bitacora.map((l, i) => (
+      <LogItem key={i} log={l} index={i} onDelete={handleDeleteLog} />
+    ));
+  }, [formData?.bitacora, handleDeleteLog]);
+
   if (rLoading || pLoading) return <PageContainer title="Relationships"><Loader /></PageContainer>;
 
   return (
@@ -255,12 +280,7 @@ const RelationshipsPage = () => {
                          <input placeholder="Evento..." value={logInput.evento} onChange={(e)=>setLogInput({...logInput, evento: e.target.value})} className="border p-2 rounded-lg text-xs" />
                       </div>
                       <div className="space-y-3 max-h-48 overflow-y-auto scrollbar-hide">
-                        {formData.bitacora.map((l, i) => (
-                          <div key={i} className="bg-white p-3 rounded-xl border border-indigo-50 flex justify-between items-center group">
-                             <div><p className="text-[9px] font-black text-indigo-400">{l.fecha}</p><p className="text-xs font-bold">{l.evento}</p></div>
-                             <button type="button" onClick={()=>{ const n = [...formData.bitacora]; n.splice(i, 1); setFormData({...formData, bitacora: n}); }} className="text-slate-200 hover:text-red-500"><Trash2 size={12}/></button>
-                          </div>
-                        ))}
+                        {renderedBitacora}
                       </div>
                    </div>
                 </div>
