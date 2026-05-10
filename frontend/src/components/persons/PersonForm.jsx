@@ -1,6 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPerson, updatePerson } from '../../api/personsApi';
 import { Plus, Trash2, Hash, MapPin, Briefcase, Star, Building, Target, Globe, Save, X } from 'lucide-react';
+
+// ⚡ Bolt: Memoize input to prevent re-rendering all form fields on every keystroke
+const MemoInput = React.memo((props) => (
+  <input {...props} />
+));
+
+// ⚡ Bolt: Memoize select to prevent re-rendering on every keystroke
+const MemoSelect = React.memo(({ options, ...props }) => (
+  <select {...props}>
+    {options.map(opt => (
+      <option key={opt.value} value={opt.value}>{opt.label}</option>
+    ))}
+  </select>
+));
+
+const GENERO_OPTIONS = [
+  { value: "", label: "Género..." },
+  { value: "Masculino", label: "Masculino" },
+  { value: "Femenino", label: "Femenino" },
+  { value: "Otro", label: "Otro" }
+];
+
+const MODELO_TRABAJO_OPTIONS = [
+  { value: "remoto", label: "Remoto" },
+  { value: "hibrido", label: "Híbrido" },
+  { value: "presencial", label: "Presencial" }
+];
 
 const PersonForm = ({ onCreated, initialData, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -39,15 +66,18 @@ const PersonForm = ({ onCreated, initialData, onCancel }) => {
     jobComp: '', jobRole: '', jobDesde: '', jobHasta: '', jobActual: false
   });
 
-  const handleChange = (e) => {
+  // ⚡ Bolt: Use functional state update and useCallback to provide a stable reference
+  const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData({ ...formData, [parent]: { ...formData[parent], [child]: type === 'checkbox' ? checked : value } });
-    } else {
-      setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
-    }
-  };
+    setFormData(prev => {
+      if (name.includes('.')) {
+        const [parent, child] = name.split('.');
+        return { ...prev, [parent]: { ...prev[parent], [child]: type === 'checkbox' ? checked : value } };
+      } else {
+        return { ...prev, [name]: type === 'checkbox' ? checked : value };
+      }
+    });
+  }, []);
 
   const addItem = (field, value, extras = {}) => {
     if (typeof value === 'string' ? value.trim() : true) {
@@ -101,17 +131,12 @@ const PersonForm = ({ onCreated, initialData, onCancel }) => {
           <span>Identidad y Contacto</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <input name="nombre" value={formData.nombre} placeholder="Nombre" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="apellido" value={formData.apellido} placeholder="Apellido" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="fecha_nacimiento" value={formData.fecha_nacimiento} type="date" onChange={handleChange} className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="email" value={formData.email} type="email" placeholder="Email" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <input name="telefono" value={formData.telefono} placeholder="Teléfono" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
-          <select name="genero" value={formData.genero} onChange={handleChange} className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm">
-            <option value="">Género...</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Femenino">Femenino</option>
-            <option value="Otro">Otro</option>
-          </select>
+          <MemoInput name="nombre" value={formData.nombre} placeholder="Nombre" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
+          <MemoInput name="apellido" value={formData.apellido} placeholder="Apellido" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
+          <MemoInput name="fecha_nacimiento" value={formData.fecha_nacimiento} type="date" onChange={handleChange} className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
+          <MemoInput name="email" value={formData.email} type="email" placeholder="Email" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
+          <MemoInput name="telefono" value={formData.telefono} placeholder="Teléfono" onChange={handleChange} required className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
+          <MemoSelect name="genero" value={formData.genero} onChange={handleChange} options={GENERO_OPTIONS} className="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-indigo-500 text-slate-900 outline-none transition-all bg-white shadow-sm" />
         </div>
       </section>
 
@@ -121,13 +146,9 @@ const PersonForm = ({ onCreated, initialData, onCancel }) => {
           <span>Trayectoria Profesional</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <input name="profesion" value={formData.profesion} placeholder="Profesión" onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm" />
-          <input name="rol_actual" value={formData.rol_actual} placeholder="Rol Actual" onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm" />
-          <select name="modelo_trabajo" value={formData.modelo_trabajo} onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm appearance-none cursor-pointer">
-            <option value="remoto">Remoto</option>
-            <option value="hibrido">Híbrido</option>
-            <option value="presencial">Presencial</option>
-          </select>
+          <MemoInput name="profesion" value={formData.profesion} placeholder="Profesión" onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm" />
+          <MemoInput name="rol_actual" value={formData.rol_actual} placeholder="Rol Actual" onChange={handleChange} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm" />
+          <MemoSelect name="modelo_trabajo" value={formData.modelo_trabajo} onChange={handleChange} options={MODELO_TRABAJO_OPTIONS} className="border-2 border-slate-200 p-3 rounded-xl bg-white text-slate-900 outline-none shadow-sm appearance-none cursor-pointer" />
         </div>
       </section>
 
