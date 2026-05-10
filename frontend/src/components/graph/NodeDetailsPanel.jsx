@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { X, User, MapPin, Target, Star, Hash, Building, Globe, Info } from 'lucide-react';
 
-const NodeDetailsPanel = ({ node, onClose }) => {
+// ⚡ Bolt: Wrap in React.memo to prevent unnecessary re-renders when parent components update
+const NodeDetailsPanel = React.memo(({ node, onClose }) => {
   if (!node) return null;
   const props = node.properties || {};
   const group = node.group || 'Entidad';
+
+  // ⚡ Bolt: Memoize mapping operations to prevent O(N) array allocation on re-renders
+  const renderedValores = useMemo(() => {
+    if (!props.valores_fundamentales || props.valores_fundamentales.length === 0) return null;
+    return props.valores_fundamentales.map((v, i) => (
+      <span key={i} className="bg-white text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black border border-indigo-100 shadow-sm uppercase">{v}</span>
+    ));
+  }, [props.valores_fundamentales]);
+
+  const renderedProps = useMemo(() => {
+    return Object.entries(props).map(([key, value]) => {
+      if (['id', 'created_at', 'updated_at'].includes(key)) return null;
+      return (
+        <div key={key} className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 last:border-0 last:pb-0">
+          <span className="font-bold text-slate-400 uppercase text-[9px] tracking-tighter">{key}</span>
+          <span className="text-slate-700 font-black truncate max-w-[200px]">{String(value)}</span>
+        </div>
+      );
+    });
+  }, [props]);
 
   return (
     <>
@@ -54,15 +75,13 @@ const NodeDetailsPanel = ({ node, onClose }) => {
                 </div>
               </section>
 
-              {props.valores_fundamentales && props.valores_fundamentales.length > 0 && (
+              {renderedValores && (
                 <section className="space-y-4">
                   <div className="flex items-center space-x-2 text-indigo-500 font-black uppercase text-[10px] tracking-widest">
                      <Star size={14}/> <span>Valores y Motivadores</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                     {props.valores_fundamentales.map((v, i) => (
-                       <span key={i} className="bg-white text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black border border-indigo-100 shadow-sm uppercase">{v}</span>
-                     ))}
+                     {renderedValores}
                   </div>
                 </section>
               )}
@@ -84,15 +103,7 @@ const NodeDetailsPanel = ({ node, onClose }) => {
                  <Info size={14}/> <span>Metadatos del Nodo</span>
               </div>
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-3">
-                {Object.entries(props).map(([key, value]) => {
-                  if (['id', 'created_at', 'updated_at'].includes(key)) return null;
-                  return (
-                    <div key={key} className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 last:border-0 last:pb-0">
-                      <span className="font-bold text-slate-400 uppercase text-[9px] tracking-tighter">{key}</span>
-                      <span className="text-slate-700 font-black truncate max-w-[200px]">{String(value)}</span>
-                    </div>
-                  );
-                })}
+                {renderedProps}
               </div>
             </section>
           )}
@@ -107,6 +118,6 @@ const NodeDetailsPanel = ({ node, onClose }) => {
       </div>
     </>
   );
-};
+});
 
 export default NodeDetailsPanel;

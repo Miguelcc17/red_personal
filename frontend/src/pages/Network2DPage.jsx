@@ -24,6 +24,18 @@ const Network2DPage = () => {
     setSelectedLink(link);
   }, []);
 
+  // ⚡ Bolt: Memoize the onClose handlers so the NodeDetailsPanel/LinkDetailsPanel
+  // don't re-render purely because of a new function reference when modal state changes
+  const handleNodeClose = useCallback(() => setSelectedNode(null), []);
+  const handleLinkClose = useCallback(() => setSelectedLink(null), []);
+  const handleLinkEdit = useCallback(() => setIsEditModalOpen(true), []);
+  const handleModalSave = useCallback(() => {
+    setIsEditModalOpen(false);
+    setSelectedLink(null);
+    fetchGraph();
+  }, [fetchGraph]);
+  const handleModalClose = useCallback(() => setIsEditModalOpen(false), []);
+
   if (loading) return (
     <div className="flex bg-slate-50 min-h-screen"><Navbar /><div className="flex-1 ml-72 flex items-center justify-center"><Loader /></div></div>
   );
@@ -52,14 +64,14 @@ const Network2DPage = () => {
           </div>
         )}
 
-        <NodeDetailsPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
-        <LinkDetailsPanel link={selectedLink} onClose={() => setSelectedLink(null)} onEdit={() => setIsEditModalOpen(true)} />
+        <NodeDetailsPanel node={selectedNode} onClose={handleNodeClose} />
+        <LinkDetailsPanel link={selectedLink} onClose={handleLinkClose} onEdit={handleLinkEdit} />
 
         <EditRelationshipModal
           isOpen={isEditModalOpen}
           link={selectedLink}
-          onSave={() => { setIsEditModalOpen(false); setSelectedLink(null); fetchGraph(); }}
-          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleModalSave}
+          onClose={handleModalClose}
         />
       </main>
     </div>
