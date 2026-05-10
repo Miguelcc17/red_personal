@@ -1,18 +1,34 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { X, Share2, Calendar, Star, Clock, Info, ArrowRight, History, Edit2 } from 'lucide-react';
 
-const LinkDetailsPanel = ({ link, onClose, onEdit }) => {
+// ⚡ Bolt: Wrap in React.memo to prevent unnecessary re-renders when parent components (like the 3D graph) update state
+const LinkDetailsPanel = React.memo(({ link, onClose, onEdit }) => {
   if (!link) return null;
   const props = link.properties || {};
 
-  let bitacora = [];
-  if (props.bitacora) {
+  // ⚡ Bolt: Memoize the parsing of the bitacora array to prevent doing it on every re-render
+  const bitacora = useMemo(() => {
+    if (!props.bitacora) return [];
     if (typeof props.bitacora === 'string') {
-       try { bitacora = JSON.parse(props.bitacora); } catch(e) { bitacora = []; }
-    } else {
-       bitacora = props.bitacora;
+       try { return JSON.parse(props.bitacora); } catch(e) { return []; }
     }
-  }
+    return props.bitacora;
+  }, [props.bitacora]);
+
+  // ⚡ Bolt: Memoize the mapping operation to prevent O(N) array allocation on re-renders
+  const renderedBitacora = useMemo(() => {
+    if (bitacora.length === 0) return null;
+    return bitacora.map((log, i) => (
+      <div key={i} className="relative pl-6">
+        <div className="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 border-2 border-white shadow-sm" />
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
+            <p className="text-[9px] font-black text-indigo-400 uppercase">{log.fecha}</p>
+            <p className="text-xs font-black text-slate-800">{log.evento}</p>
+            {log.comentario && <p className="text-[10px] text-slate-500 italic leading-relaxed">"{log.comentario}"</p>}
+        </div>
+      </div>
+    ));
+  }, [bitacora]);
 
   return (
     <>
@@ -82,16 +98,7 @@ const LinkDetailsPanel = ({ link, onClose, onEdit }) => {
               </div>
               <div className="space-y-6 relative ml-2">
                  <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-indigo-100" />
-                 {bitacora.map((log, i) => (
-                   <div key={i} className="relative pl-6">
-                      <div className="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 border-2 border-white shadow-sm" />
-                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
-                         <p className="text-[9px] font-black text-indigo-400 uppercase">{log.fecha}</p>
-                         <p className="text-xs font-black text-slate-800">{log.evento}</p>
-                         {log.comentario && <p className="text-[10px] text-slate-500 italic leading-relaxed">"{log.comentario}"</p>}
-                      </div>
-                   </div>
-                 ))}
+                 {renderedBitacora}
               </div>
             </section>
           )}
@@ -112,6 +119,6 @@ const LinkDetailsPanel = ({ link, onClose, onEdit }) => {
       </div>
     </>
   );
-};
+});
 
 export default LinkDetailsPanel;
