@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Mail, Phone, MapPin, Trash2, Edit2 } from 'lucide-react';
 
 // ⚡ Bolt: Prevent unnecessary re-renders of list items using React.memo
 // This ensures that typing in the search bar or toggling the "Añadir Persona" form
 // doesn't trigger O(N) re-renders for every PersonCard in the grid.
 const PersonCard = React.memo(({ person, onDelete, onEdit }) => {
+  // ⚡ Bolt: Memoize the sliced array to prevent allocating a new array on every render
+  const topHobbies = useMemo(() => person.hobbies?.slice(0, 3) || [], [person.hobbies]);
+
   return (
     <div className="bg-white border border-slate-200 rounded-[2rem] p-6 hover:shadow-2xl hover:shadow-indigo-50 transition-all group relative overflow-hidden text-slate-900">
       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110" />
@@ -47,7 +50,7 @@ const PersonCard = React.memo(({ person, onDelete, onEdit }) => {
 
       {person.hobbies && person.hobbies.length > 0 && (
         <div className="mt-6 flex flex-wrap gap-2 relative">
-          {person.hobbies.slice(0, 3).map((h, i) => (
+          {topHobbies.map((h, i) => (
             <span key={i} className="bg-white border border-indigo-200 text-indigo-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm">
               {h.nombre}
             </span>
