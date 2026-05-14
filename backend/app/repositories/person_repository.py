@@ -116,27 +116,24 @@ class PersonRepository:
 
     def get_by_id(self, person_id):
         with self.conn.get_session() as session:
+            # ⚡ Bolt: Fixed O(N*M*P) Cartesian product explosion by replacing multiple OPTIONAL MATCH
+            # with Cypher Pattern Comprehensions. Now runs in linear time O(N+M+P).
             query = """
             MATCH (p:Person {id: $pid})
             OPTIONAL MATCH (p)-[:HAS_GENDER]->(g:Gender)
             OPTIONAL MATCH (p)-[:WORKS_AS]->(pr:Profession)
             OPTIONAL MATCH (p)-[:BORN_IN]->(bc:City)-[:IN_COUNTRY]->(bco:Country)
             OPTIONAL MATCH (p)-[:LIVES_IN]->(rc:City)-[:IN_COUNTRY]->(rco:Country)
-            OPTIONAL MATCH (p)-[rel_h:ENJOYS]->(h:Hobby)
-            OPTIONAL MATCH (p)-[rel_l:SPEAKS]->(l:Language)
-            OPTIONAL MATCH (p)-[rel_w:WORKED_AT]->(comp:Company)
-            OPTIONAL MATCH (p)-[rel_e:STUDIED_AT]->(inst:Institution)
-            OPTIONAL MATCH (p)-[:HAS_GOAL]->(goal:Goal)
             OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t:Tattoo)
 
             RETURN p, g.nombre as genero, pr.nombre as profesion,
                    bc.nombre as ciudad_nacimiento, bco.nombre as pais_nacimiento,
                    rc.nombre as ciudad_residencia, rco.nombre as pais_residencia,
-                   collect(distinct {nombre: h.nombre, active: rel_h.active, categoria: rel_h.categoria, descripcion: rel_h.descripcion}) as hobbies,
-                   collect(distinct {nombre: l.nombre, nivel: rel_l.nivel}) as idiomas,
-                   collect(distinct {empresa: comp.nombre, cargo: rel_w.cargo, desde: rel_w.desde, hasta: rel_w.hasta, actual: rel_w.actual, modalidad: rel_w.modalidad, descripcion: rel_w.descripcion, industria: rel_w.industria}) as historial_trabajos,
-                   collect(distinct {institucion: inst.nombre, titulo: rel_e.titulo, area: rel_e.area, desde: rel_e.desde, hasta: rel_e.hasta, actual: rel_e.actual}) as educacion,
-                   collect(distinct properties(goal)) as metas,
+                   [(p)-[rel_h:ENJOYS]->(h:Hobby) | {nombre: h.nombre, active: rel_h.active, categoria: rel_h.categoria, descripcion: rel_h.descripcion}] as hobbies,
+                   [(p)-[rel_l:SPEAKS]->(l:Language) | {nombre: l.nombre, nivel: rel_l.nivel}] as idiomas,
+                   [(p)-[rel_w:WORKED_AT]->(comp:Company) | {empresa: comp.nombre, cargo: rel_w.cargo, desde: rel_w.desde, hasta: rel_w.hasta, actual: rel_w.actual, modalidad: rel_w.modalidad, descripcion: rel_w.descripcion, industria: rel_w.industria}] as historial_trabajos,
+                   [(p)-[rel_e:STUDIED_AT]->(inst:Institution) | {institucion: inst.nombre, titulo: rel_e.titulo, area: rel_e.area, desde: rel_e.desde, hasta: rel_e.hasta, actual: rel_e.actual}] as educacion,
+                   [(p)-[:HAS_GOAL]->(goal:Goal) | properties(goal)] as metas,
                    properties(t) as tatuajes
             """
             result = session.run(query, pid=person_id)
@@ -150,10 +147,10 @@ class PersonRepository:
             data['pais_nacimiento'] = record['pais_nacimiento']
             data['ciudad_residencia'] = record['ciudad_residencia']
             data['pais_residencia'] = record['pais_residencia']
-            data['hobbies'] = [x for x in record['hobbies'] if x['nombre'] is not None]
-            data['idiomas'] = [x for x in record['idiomas'] if x['nombre'] is not None]
-            data['historial_trabajos'] = [x for x in record['historial_trabajos'] if x['empresa'] is not None]
-            data['educacion'] = [x for x in record['educacion'] if x['institucion'] is not None]
+            data['hobbies'] = record['hobbies']
+            data['idiomas'] = record['idiomas']
+            data['historial_trabajos'] = record['historial_trabajos']
+            data['educacion'] = record['educacion']
             data['metas'] = record['metas']
             data['tatuajes'] = record['tatuajes']
 
