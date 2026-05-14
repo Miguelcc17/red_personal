@@ -46,3 +46,7 @@
 ## 2024-11-20 - Unnecessary useMemo micro-optimization
 **Learning:** Avoid wrapping simple array slicing (e.g., 'persons.slice(0, 3)') in 'useMemo' hooks for small arrays, as the hook's overhead is often greater than the slicing operation itself, resulting in a micro-optimization with no measurable impact.
 **Action:** Do not use `useMemo` for simple operations like small array slicing unless there is a proven performance bottleneck. Focus on memoizing expensive operations or objects/functions that are passed as props to child components.
+
+## 2026-05-13 - O(N) recreations of complex detail panels
+**Learning:** In components rendering highly complex data structures passed as props, such as `NodeDetailsPanel` and `LinkDetailsPanel`, leaving operations like `Object.entries(props).map()` or `JSON.parse(props.bitacora)` inline causes the entire panel to unnecessarily re-evaluate and recreate a large DOM tree whenever the parent component state changes (e.g. toggling a modal).
+**Action:** When a UI panel is tasked with rendering dynamic complex data arrays, always wrap the component in `React.memo` and ensure any inner map logic over object keys or array string parsing is wrapped in `useMemo`.

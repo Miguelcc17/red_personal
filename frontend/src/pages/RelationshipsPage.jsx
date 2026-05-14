@@ -16,6 +16,32 @@ const PersonSelectorCard = React.memo(({ person, onClick }) => (
   </button>
 ));
 
+// ⚡ Bolt: Memoize input to prevent re-rendering all form fields on every keystroke
+const MemoInput = React.memo((props) => (
+  <input {...props} />
+));
+
+// ⚡ Bolt: Memoize textarea
+const MemoTextArea = React.memo((props) => (
+  <textarea {...props} />
+));
+
+// ⚡ Bolt: Memoize select to prevent re-rendering on every keystroke
+const MemoSelect = React.memo(({ options, ...props }) => (
+  <select {...props}>
+    {options.map(opt => (
+      <option key={opt.value} value={opt.value}>{opt.label}</option>
+    ))}
+  </select>
+));
+
+const ESTADO_OPTIONS = [
+  { value: "activa", label: "Activa" },
+  { value: "finalizada", label: "Finalizada" },
+  { value: "distante", label: "Distante" },
+  { value: "conflicto", label: "Conflicto" }
+];
+
 // ⚡ Bolt: Extract log item to prevent re-renders of the whole list
 const LogItem = React.memo(({ log, index, onDelete }) => (
   <div className="bg-white p-3 rounded-xl border border-indigo-50 flex justify-between items-center group">
@@ -46,6 +72,7 @@ const RELATIONSHIP_TYPES = [
   { id: 'rival', label: 'Rival', trustLabel: 'Competitividad', help: 'Relación de competencia directa.' },
   { id: 'enemigo_a', label: 'Enemigo/a', trustLabel: 'Nivel de Conflicto', help: 'Vínculo de hostilidad manifiesta.' }
 ];
+const RELATIONSHIP_OPTIONS = RELATIONSHIP_TYPES.map(t => ({ value: t.id, label: t.label }));
 
 const RelationshipsPage = () => {
   const { relationships, loading: rLoading, fetchRelationships } = useRelationships();
@@ -114,6 +141,19 @@ const RelationshipsPage = () => {
     setStep(1);
     setFormData({ p1_id: '', p2_id: '', tipo_relacion: 'amigo', descripcion: '', nivel_confianza: 3, desde: new Date().toISOString().split('T')[0], hasta: '', estado: 'activa', bitacora: [] });
   };
+
+  const handleFormChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'nivel_confianza' ? parseInt(value) : value
+    }));
+  }, []);
+
+  const handleLogInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setLogInput(prev => ({ ...prev, [name]: value }));
+  }, []);
 
   const getPersonName = useCallback((id) => {
     // ⚡ Bolt: Fast O(1) lookup for relationship names
@@ -189,6 +229,16 @@ const RelationshipsPage = () => {
     ));
   }, [formData?.bitacora, handleDeleteLog]);
 
+  // ⚡ Bolt: Memoize step tabs to avoid recreation on every render
+  const renderedStepTabs = useMemo(() => (
+    [1, 2, 3].map(s => (
+      <div key={s} className={`flex-1 p-8 text-center font-black uppercase tracking-widest text-[10px] flex items-center justify-center space-x-3 ${step === s ? 'text-indigo-600 bg-white border-b-2 border-indigo-600' : 'text-slate-300'}`}>
+        <div className={`w-8 h-8 rounded-2xl flex items-center justify-center ${step === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-200 text-slate-400'}`}>{s}</div>
+        <span>{s === 1 ? 'Persona A' : s === 2 ? 'Persona B' : 'Detalles y Bitácora'}</span>
+      </div>
+    ))
+  ), [step]);
+
   if (rLoading || pLoading) return <PageContainer title="Relationships"><Loader /></PageContainer>;
 
   return (
@@ -212,12 +262,7 @@ const RelationshipsPage = () => {
       {showForm && (
         <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl mb-16 overflow-hidden animate-in slide-in-from-top-4 duration-500">
           <div className="flex border-b border-slate-100 bg-slate-50/50">
-            {[1, 2, 3].map(s => (
-              <div key={s} className={`flex-1 p-8 text-center font-black uppercase tracking-widest text-[10px] flex items-center justify-center space-x-3 ${step === s ? 'text-indigo-600 bg-white border-b-2 border-indigo-600' : 'text-slate-300'}`}>
-                <div className={`w-8 h-8 rounded-2xl flex items-center justify-center ${step === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-200 text-slate-400'}`}>{s}</div>
-                <span>{s === 1 ? 'Persona A' : s === 2 ? 'Persona B' : 'Detalles y Bitácora'}</span>
-              </div>
-            ))}
+            {renderedStepTabs}
             <button onClick={resetForm} className="p-8 text-slate-300 hover:text-red-500 transition-colors border-l border-slate-100"><X size={20}/></button>
           </div>
 
@@ -242,30 +287,23 @@ const RelationshipsPage = () => {
                    <div className="space-y-8">
                       <div className="space-y-2 text-slate-900">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Vínculo</label>
-                        <select value={formData.tipo_relacion} onChange={(e)=>setFormData({...formData, tipo_relacion: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white font-bold outline-none focus:border-indigo-500">
-                          {RELATIONSHIP_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-                        </select>
+                        <MemoSelect name="tipo_relacion" value={formData.tipo_relacion} onChange={handleFormChange} options={RELATIONSHIP_OPTIONS} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white font-bold outline-none focus:border-indigo-500" />
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2 text-slate-900">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</label>
-                          <select value={formData.estado} onChange={(e)=>setFormData({...formData, estado: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white font-bold outline-none focus:border-indigo-500">
-                            <option value="activa">Activa</option>
-                            <option value="finalizada">Finalizada</option>
-                            <option value="distante">Distante</option>
-                            <option value="conflicto">Conflicto</option>
-                          </select>
+                          <MemoSelect name="estado" value={formData.estado} onChange={handleFormChange} options={ESTADO_OPTIONS} className="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white font-bold outline-none focus:border-indigo-500" />
                         </div>
                         <div className="space-y-2 text-slate-900">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{selectedTypeObj?.trustLabel || 'Confianza'}</label>
-                          <input type="range" min="1" max="5" value={formData.nivel_confianza} onChange={(e)=>setFormData({...formData, nivel_confianza: parseInt(e.target.value)})} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 mt-6" />
+                          <MemoInput type="range" name="nivel_confianza" min="1" max="5" value={formData.nivel_confianza} onChange={handleFormChange} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 mt-6" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-6">
-                         <input type="date" value={formData.desde} onChange={(e)=>setFormData({...formData, desde: e.target.value})} className="border-2 border-slate-100 p-4 rounded-2xl font-bold" />
-                         <input type="date" value={formData.hasta} onChange={(e)=>setFormData({...formData, hasta: e.target.value})} disabled={formData.estado === 'activa'} className="border-2 border-slate-100 p-4 rounded-2xl font-bold disabled:opacity-30" />
+                         <MemoInput type="date" name="desde" value={formData.desde} onChange={handleFormChange} className="border-2 border-slate-100 p-4 rounded-2xl font-bold" />
+                         <MemoInput type="date" name="hasta" value={formData.hasta} onChange={handleFormChange} disabled={formData.estado === 'activa'} className="border-2 border-slate-100 p-4 rounded-2xl font-bold disabled:opacity-30" />
                       </div>
-                      <textarea value={formData.descripcion} onChange={(e)=>setFormData({...formData, descripcion: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl font-bold h-24" placeholder="Descripción general..." />
+                      <MemoTextArea name="descripcion" value={formData.descripcion} onChange={handleFormChange} className="w-full border-2 border-slate-100 p-4 rounded-2xl font-bold h-24" placeholder="Descripción general..." />
                    </div>
 
                    <div className="space-y-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
@@ -276,8 +314,8 @@ const RelationshipsPage = () => {
                          }} className="bg-indigo-600 text-white px-4 py-1 rounded-lg text-[9px] font-black uppercase shadow-lg">Añadir</button>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                         <input type="date" value={logInput.fecha} onChange={(e)=>setLogInput({...logInput, fecha: e.target.value})} className="border p-2 rounded-lg text-xs" />
-                         <input placeholder="Evento..." value={logInput.evento} onChange={(e)=>setLogInput({...logInput, evento: e.target.value})} className="border p-2 rounded-lg text-xs" />
+                         <MemoInput type="date" name="fecha" value={logInput.fecha} onChange={handleLogInputChange} className="border p-2 rounded-lg text-xs" />
+                         <MemoInput placeholder="Evento..." name="evento" value={logInput.evento} onChange={handleLogInputChange} className="border p-2 rounded-lg text-xs" />
                       </div>
                       <div className="space-y-3 max-h-48 overflow-y-auto scrollbar-hide">
                         {renderedBitacora}

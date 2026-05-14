@@ -36,6 +36,16 @@ const Dashboard = () => {
   // ⚡ Bolt: Memoize recent persons to avoid slicing on every render
   const recentPersons = useMemo(() => persons.slice(0, 5), [persons]);
 
+  // ⚡ Bolt: Memoize the rendered elements to prevent mapping array on every render
+  const renderedStats = useMemo(() => (
+    stats.map((stat, i) => <StatCard key={i} stat={stat} />)
+  ), [stats]);
+
+  // ⚡ Bolt: Memoize the rendered elements to prevent mapping array on every render
+  const renderedRecentPersons = useMemo(() => (
+    recentPersons.map(p => <RecentPersonCard key={p.id} person={p} />)
+  ), [recentPersons]);
+
   if (pLoading || rLoading || gLoading) return <PageContainer title="Dashboard"><Loader /></PageContainer>;
 
   return (
@@ -47,9 +57,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {stats.map((stat, i) => (
-          <StatCard key={i} stat={stat} />
-        ))}
+        {renderedStats}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -71,9 +79,7 @@ const Dashboard = () => {
         <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
           <h3 className="text-xl font-black text-gray-800 mb-6 uppercase tracking-tight">Individuos Recientes</h3>
           <div className="space-y-4">
-            {recentPersons.map(p => (
-              <RecentPersonCard key={p.id} person={p} />
-            ))}
+            {renderedRecentPersons}
             {persons.length === 0 && <p className="text-gray-400 text-center py-10 italic font-medium">No hay individuos registrados aún.</p>}
           </div>
         </div>
