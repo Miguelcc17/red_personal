@@ -94,13 +94,15 @@ class PersonRepository:
 
     def get_all(self):
         with self.conn.get_session() as session:
+            # ⚡ Bolt: Fixed O(N*M*P) Cartesian product explosion by replacing multiple OPTIONAL MATCH
+            # with Cypher Pattern Comprehensions. Now runs in linear time O(N+M+P).
             query = """
             MATCH (p:Person)
-            OPTIONAL MATCH (p)-[:HAS_GENDER]->(g:Gender)
-            OPTIONAL MATCH (p)-[:WORKS_AS]->(pr:Profession)
-            OPTIONAL MATCH (p)-[:LIVES_IN]->(rc:City)-[:IN_COUNTRY]->(rco:Country)
-            RETURN p, g.nombre as genero, pr.nombre as profesion,
-                   rc.nombre as ciudad_residencia, rco.nombre as pais_residencia
+            RETURN p,
+                   [(p)-[:HAS_GENDER]->(g:Gender) | g.nombre][0] as genero,
+                   [(p)-[:WORKS_AS]->(pr:Profession) | pr.nombre][0] as profesion,
+                   [(p)-[:LIVES_IN]->(rc:City) | rc.nombre][0] as ciudad_residencia,
+                   [(p)-[:LIVES_IN]->(:City)-[:IN_COUNTRY]->(rco:Country) | rco.nombre][0] as pais_residencia
             ORDER BY p.nombre ASC
             """
             result = session.run(query)
