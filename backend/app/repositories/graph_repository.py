@@ -16,17 +16,17 @@ class GraphRepository:
 
     def get_full_graph(self):
         with self.conn.get_session() as session:
-            # elementId() is the correct way to get a unique identifier in Neo4j 5.x
-            query = """
-            MATCH (n)
-            OPTIONAL MATCH (n)-[r]->(m)
-            RETURN collect(distinct n) as nodes, collect(distinct {source: elementId(n), target: elementId(m), label: type(r), props: properties(r)}) as links
-            """
-            result = session.run(query)
-            record = result.single()
+            # ⚡ Bolt: Prevent Neo4j OutOfMemory errors and Cartesian product bottlenecks
+            # by fetching nodes and links in separate, streamed queries instead of
+            # forcing a single aggregated row with `collect(distinct)`.
+
+            # Fetch nodes
+            nodes_query = "MATCH (n) RETURN n"
+            nodes_result = session.run(nodes_query)
 
             nodes = []
-            for node in record['nodes']:
+            for record in nodes_result:
+                node = record['n']
                 label = ""
                 if 'nombre_completo' in node: label = node['nombre_completo']
                 elif 'nombre' in node: label = node['nombre']
@@ -43,16 +43,27 @@ class GraphRepository:
                     "properties": self._convert_neo4j_types(dict(node))
                 })
 
+            # Fetch links
+            links_query = """
+            MATCH (n)-[r]->(m)
+            RETURN elementId(n) as source, elementId(m) as target, type(r) as label, properties(r) as props
+            """
+            links_result = session.run(links_query)
+
             links = []
-            for link in record['links']:
-                if link['target'] is not None:
-                    links.append({
-                        "id": f"{link['source']}-{link['target']}-{link['label']}",
-                        "source": link['source'],
-                        "target": link['target'],
-                        "label": link['label'],
-                        "properties": self._convert_neo4j_types(link['props'])
-                    })
+            for record in links_result:
+                source = record['source']
+                target = record['target']
+                label = record['label']
+                props = record['props']
+
+                links.append({
+                    "id": f"{source}-{target}-{label}",
+                    "source": source,
+                    "target": target,
+                    "label": label,
+                    "properties": self._convert_neo4j_types(props)
+                })
 
             return {"nodes": nodes, "links": links}
 
