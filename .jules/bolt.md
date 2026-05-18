@@ -60,3 +60,7 @@
 ## 2026-05-19 - Cartesian product explosion in Cypher full graph queries
 **Learning:** Found an application-specific bottleneck in the backend where `GraphRepository.get_full_graph` used a single query with `OPTIONAL MATCH (n)-[r]->(m)` followed by `collect(distinct n)` and `collect(distinct {source...})`. This creates a Cartesian product of size O(N * E) and forces the Neo4j database to aggregate the entire graph into a single memory-heavy result row, leading to severe performance bottlenecks and OutOfMemory errors on large graphs.
 **Action:** Always fetch nodes and links in separate, streamed queries (e.g., `MATCH (n) RETURN n` and `MATCH (n)-[r]->(m) RETURN ...`) when retrieving a full graph or large subgraphs. This allows Neo4j to stream the results directly in linear `O(N) + O(E)` time without the massive `collect(distinct)` aggregation overhead.
+
+## 2024-06-25 - Cartesian product explosion in PersonRepository.get_by_id Cypher OPTIONAL MATCH queries
+**Learning:** Found an application-specific bottleneck in the backend where `PersonRepository.get_by_id` used multiple sequential `OPTIONAL MATCH` clauses for 1-to-N relationships (like `HAS_GENDER`, `WORKS_AS`, `LIVES_IN`, `HAS_TATTOO`). This creates a massive Cartesian product, significantly increasing the complexity to `O(N*M*P)`.
+**Action:** Replace multiple `OPTIONAL MATCH` clauses with Cypher Pattern Comprehensions (e.g., `[(p)-[:HAS_GENDER]->(g:Gender) | g.nombre][0] as genero`) to ensure linear evaluation time `O(N+M+P)`.
