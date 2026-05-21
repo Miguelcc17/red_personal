@@ -67,3 +67,6 @@
 ## 2024-06-25 - Cartesian product explosion in GraphRepository.get_graph_by_person Cypher queries
 **Learning:** Found an application-specific bottleneck in the backend where `GraphRepository.get_graph_by_person` used a single Cypher query with multiple `OPTIONAL MATCH` and `collect(distinct)` aggregations for graph paths. This created a massive Cartesian product, forcing Neo4j to serialize and aggregate a single enormous memory-heavy result row for the 2-hop neighborhood, leading to severe performance degradation.
 **Action:** Replace single aggregated graph queries with separate, streamed Cypher queries (e.g., one query to `RETURN DISTINCT` nodes, and a second to unwind and stream relationships). This ensures linear evaluation time `O(N+E)` and prevents memory exhaustion.
+## 2024-06-25 - Missing Neo4j Indexes on ID fields
+**Learning:** Found an application-specific bottleneck where database operations (like get_by_id, update, delete) were performing full graph scans `O(N)` because Neo4j doesn't automatically index custom `id` properties (only internal elementId). This causes significant performance degradation as the network grows.
+**Action:** Always create Neo4j indexes on frequently queried properties (e.g., `CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.id)`) during application initialization to ensure `O(log N)` lookup times.

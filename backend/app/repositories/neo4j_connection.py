@@ -21,6 +21,15 @@ class Neo4jConnection:
                 # Test connection
                 self.driver.verify_connectivity()
                 logger.info(f"Successfully connected to Neo4j at {self.uri}")
+
+                # ⚡ Bolt: Add database indexes to optimize O(N) full node scans to O(log N) index lookups
+                try:
+                    with self.driver.session() as session:
+                        session.run("CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.id)")
+                        session.run("CREATE INDEX IF NOT EXISTS FOR ()-[r:RELATED_TO]-() ON (r.id)")
+                except Exception as index_e:
+                    logger.warning(f"Failed to create indexes: {index_e}")
+
                 return
             except Exception as e:
                 retries -= 1
