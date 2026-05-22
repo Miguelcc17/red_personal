@@ -2,6 +2,16 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Save, History, Trash2, Star, Clock } from 'lucide-react';
 import { updateRelationship } from '../../api/relationshipsApi';
 
+// ⚡ Bolt: Memoize input to prevent re-rendering all form fields on every keystroke
+const MemoInput = React.memo((props) => (
+  <input {...props} />
+));
+
+// ⚡ Bolt: Memoize textarea
+const MemoTextArea = React.memo((props) => (
+  <textarea {...props} />
+));
+
 // ⚡ Bolt: Extract log item to prevent re-renders of the whole list
 const LogItem = React.memo(({ log, index, onDelete }) => (
   <div className="bg-white p-3 rounded-xl border border-indigo-50 flex justify-between items-center group">
@@ -37,6 +47,20 @@ const EditRelationshipModal = ({ isOpen, link, onSave, onClose }) => {
     }
   };
 
+  // ⚡ Bolt: Use functional state update and useCallback to provide stable references
+  const handleFormChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'nivel_confianza' ? parseInt(value) : value
+    }));
+  }, []);
+
+  const handleLogInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setLogInput(prev => ({ ...prev, [name]: value }));
+  }, []);
+
   // ⚡ Bolt: Memoize the delete handler to preserve reference equality
   const handleDeleteLog = useCallback((index) => {
     setFormData(prev => {
@@ -70,7 +94,7 @@ const EditRelationshipModal = ({ isOpen, link, onSave, onClose }) => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado de la Relación</label>
                     <div className="grid grid-cols-2 gap-2">
                       {['activa', 'finalizada', 'distante', 'conflicto'].map(s => (
-                        <button key={s} type="button" onClick={()=>setFormData({...formData, estado: s})} className={`p-3 rounded-xl text-[10px] font-black uppercase transition-all ${formData.estado === s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                        <button key={s} type="button" onClick={()=>setFormData(prev => ({...prev, estado: s}))} className={`p-3 rounded-xl text-[10px] font-black uppercase transition-all ${formData.estado === s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
                           {s}
                         </button>
                       ))}
@@ -78,25 +102,25 @@ const EditRelationshipModal = ({ isOpen, link, onSave, onClose }) => {
                  </div>
                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nivel de Confianza (1-5)</label>
-                    <input type="range" min="1" max="5" value={formData.nivel_confianza} onChange={(e)=>setFormData({...formData, nivel_confianza: parseInt(e.target.value)})} className="w-full h-2 bg-slate-100 rounded-lg appearance-none accent-indigo-600" />
+                    <MemoInput type="range" min="1" max="5" name="nivel_confianza" value={formData.nivel_confianza} onChange={handleFormChange} className="w-full h-2 bg-slate-100 rounded-lg appearance-none accent-indigo-600" />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
-                    <input type="date" value={formData.desde} onChange={(e)=>setFormData({...formData, desde: e.target.value})} className="border-2 border-slate-100 p-4 rounded-2xl font-bold" />
-                    <input type="date" value={formData.hasta} onChange={(e)=>setFormData({...formData, hasta: e.target.value})} disabled={formData.estado === 'activa'} className="border-2 border-slate-100 p-4 rounded-2xl font-bold disabled:opacity-30" />
+                    <MemoInput type="date" name="desde" value={formData.desde} onChange={handleFormChange} className="border-2 border-slate-100 p-4 rounded-2xl font-bold" />
+                    <MemoInput type="date" name="hasta" value={formData.hasta} onChange={handleFormChange} disabled={formData.estado === 'activa'} className="border-2 border-slate-100 p-4 rounded-2xl font-bold disabled:opacity-30" />
                  </div>
-                 <textarea value={formData.descripcion} onChange={(e)=>setFormData({...formData, descripcion: e.target.value})} className="w-full border-2 border-slate-100 p-4 rounded-2xl font-bold h-24" placeholder="Notas..." />
+                 <MemoTextArea name="descripcion" value={formData.descripcion} onChange={handleFormChange} className="w-full border-2 border-slate-100 p-4 rounded-2xl font-bold h-24" placeholder="Notas..." />
               </div>
 
               <div className="space-y-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
                   <div className="flex items-center justify-between">
                      <div className="flex items-center space-x-2 text-indigo-600 font-black uppercase text-[10px] tracking-widest"><History size={16}/> <span>Bitácora</span></div>
                      <button type="button" onClick={()=>{
-                       if(logInput.evento) { setFormData({...formData, bitacora: [...formData.bitacora, logInput]}); setLogInput({fecha: new Date().toISOString().split('T')[0], evento: '', comentario: ''}); }
+                       if(logInput.evento) { setFormData(prev => ({...prev, bitacora: [...prev.bitacora, logInput]})); setLogInput({fecha: new Date().toISOString().split('T')[0], evento: '', comentario: ''}); }
                      }} className="bg-indigo-600 text-white px-4 py-1 rounded-lg text-[9px] font-black uppercase shadow-lg">Añadir</button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                     <input type="date" value={logInput.fecha} onChange={(e)=>setLogInput({...logInput, fecha: e.target.value})} className="border p-2 rounded-lg text-xs" />
-                     <input placeholder="Evento..." value={logInput.evento} onChange={(e)=>setLogInput({...logInput, evento: e.target.value})} className="border p-2 rounded-lg text-xs" />
+                     <MemoInput type="date" name="fecha" value={logInput.fecha} onChange={handleLogInputChange} className="border p-2 rounded-lg text-xs" />
+                     <MemoInput placeholder="Evento..." name="evento" value={logInput.evento} onChange={handleLogInputChange} className="border p-2 rounded-lg text-xs" />
                   </div>
                   <div className="space-y-3 max-h-48 overflow-y-auto scrollbar-hide">
                     {renderedBitacora}
