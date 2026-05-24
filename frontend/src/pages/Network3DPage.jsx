@@ -1,12 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, Suspense } from 'react';
 import Navbar from '../components/layout/Navbar';
 import { useGraphData } from '../hooks/useGraph';
-import Graph3DView from '../components/graph/Graph3DView';
 import NodeDetailsPanel from '../components/graph/NodeDetailsPanel';
 import LinkDetailsPanel from '../components/graph/LinkDetailsPanel';
 import EditRelationshipModal from '../components/graph/EditRelationshipModal';
 import Loader from '../components/common/Loader';
 import { Box, Command } from 'lucide-react';
+
+const Graph3DView = React.lazy(() => import('../components/graph/Graph3DView'));
 
 const Network3DPage = () => {
   const { graphData, loading, fetchGraph } = useGraphData();
@@ -51,8 +52,10 @@ const Network3DPage = () => {
            </div>
         </div>
 
-        <div className="flex-1 w-full h-full">
-           <Graph3DView data={graphData} onNodeClick={handleNodeClick} onLinkClick={handleLinkClick} />
+        <div className="flex-1 w-full h-full relative">
+           <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center bg-slate-950"><Loader /></div>}>
+             <Graph3DView data={graphData} onNodeClick={handleNodeClick} onLinkClick={handleLinkClick} />
+           </Suspense>
         </div>
 
         {!selectedNode && !selectedLink && (
