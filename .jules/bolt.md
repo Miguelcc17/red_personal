@@ -76,3 +76,6 @@
 ## 2024-06-25 - Code splitting for heavy graph visualizations
 **Learning:** The application imported massive visualization libraries (`react-force-graph-2d`, `react-force-graph-3d`, and `three.js`) synchronously in standard route components (`Network2DPage`, `Network3DPage`). This forced all users to download over 1.7MB of JavaScript in the main bundle during the initial load, even if they never visited the graph pages.
 **Action:** When working with heavy third-party visualization libraries, dynamically import them using `React.lazy()` and `React.Suspense` to defer loading until the user explicitly navigates to the associated route. This significantly reduces the initial bundle size and improves load times.
+## 2024-06-25 - Prevent full page reloads by using client-side routing
+**Learning:** Found an application-specific performance bottleneck where navigation buttons used `window.location.href='/...'` to route within the React SPA. This bypassed the router, triggering a full browser page reload, destroying local state, and forcing the browser to re-download assets, completely negating the performance benefits of a Single Page Application.
+**Action:** For internal routing within a React SPA, always use `useNavigate` from `react-router-dom` or `<Link>` components instead of directly assigning `window.location.href`.
