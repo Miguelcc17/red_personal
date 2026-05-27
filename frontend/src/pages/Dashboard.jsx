@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageContainer from '../components/layout/PageContainer';
 import { usePersons } from '../hooks/usePersons';
 import { useRelationships } from '../hooks/useRelationships';
@@ -10,6 +11,7 @@ import RecentPersonCard from '../components/persons/RecentPersonCard';
 import StatCard from '../components/dashboard/StatCard';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { persons, loading: pLoading, fetchPersons } = usePersons();
   const { relationships, loading: rLoading, fetchRelationships } = useRelationships();
   const { graphData, loading: gLoading, fetchGraph } = useGraphData();
@@ -67,10 +69,10 @@ const Dashboard = () => {
             <p className="text-indigo-100 mb-8 leading-relaxed opacity-80">Explora las conexiones dinámicas y las trayectorias de los individuos en tu red profesional. Nuestra arquitectura de grafos permite un análisis profundo basado en historia y afinidad.</p>
           </div>
           <div className="flex space-x-4">
-            <button onClick={() => window.location.href='/network-2d'} className="bg-white text-indigo-900 px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg">
+            <button onClick={() => navigate('/network-2d')} className="bg-white text-indigo-900 px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg">
               Ver Mapa 2D
             </button>
-            <button onClick={() => window.location.href='/network-3d'} className="bg-indigo-500 text-white border border-indigo-400 px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-400 transition-all">
+            <button onClick={() => navigate('/network-3d')} className="bg-indigo-500 text-white border border-indigo-400 px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-400 transition-all">
               Red Neuronal 3D
             </button>
           </div>
