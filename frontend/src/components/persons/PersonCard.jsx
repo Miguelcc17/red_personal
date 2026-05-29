@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Mail, Phone, MapPin, Trash2, Edit2 } from 'lucide-react';
 
 // ⚡ Bolt: Prevent unnecessary re-renders of list items using React.memo
 // This ensures that typing in the search bar or toggling the "Añadir Persona" form
 // doesn't trigger O(N) re-renders for every PersonCard in the grid.
 const PersonCard = React.memo(({ person, onDelete, onEdit }) => {
-  // ⚡ Bolt: Memoize the sliced array to prevent allocating a new array on every render
-  const topHobbies = useMemo(() => person.hobbies?.slice(0, 3) || [], [person.hobbies]);
+  // ⚡ Bolt: Remove unnecessary useMemo micro-optimization. Wrapping simple array slicing
+  // in useMemo has more overhead than the slicing operation itself.
+  const topHobbies = person.hobbies?.slice(0, 3) || [];
 
   return (
     <div className="bg-white border border-slate-200 rounded-[2rem] p-6 hover:shadow-2xl hover:shadow-indigo-50 transition-all group relative overflow-hidden text-slate-900">
