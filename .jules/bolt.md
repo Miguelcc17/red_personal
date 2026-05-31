@@ -79,3 +79,6 @@
 ## 2024-06-25 - Prevent full page reloads by using client-side routing
 **Learning:** Found an application-specific performance bottleneck where navigation buttons used `window.location.href='/...'` to route within the React SPA. This bypassed the router, triggering a full browser page reload, destroying local state, and forcing the browser to re-download assets, completely negating the performance benefits of a Single Page Application.
 **Action:** For internal routing within a React SPA, always use `useNavigate` from `react-router-dom` or `<Link>` components instead of directly assigning `window.location.href`.
+## 2026-05-30 - Code splitting for main routes
+**Learning:** Found an application-specific bottleneck where all main page components (`Dashboard`, `PersonsPage`, `RelationshipsPage`, etc.) were imported synchronously in `router.jsx`. This forced the browser to download the entire application's React code upfront in a single massive bundle, even if a user only visits the Dashboard. This defeats the purpose of modular pages.
+**Action:** Always implement code-splitting at the route level in React applications by using `React.lazy()` for page imports and wrapping the router configuration or individual routes in a `<Suspense>` boundary with a generic loader fallback.
