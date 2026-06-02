@@ -82,3 +82,7 @@
 ## 2026-05-30 - Code splitting for main routes
 **Learning:** Found an application-specific bottleneck where all main page components (`Dashboard`, `PersonsPage`, `RelationshipsPage`, etc.) were imported synchronously in `router.jsx`. This forced the browser to download the entire application's React code upfront in a single massive bundle, even if a user only visits the Dashboard. This defeats the purpose of modular pages.
 **Action:** Always implement code-splitting at the route level in React applications by using `React.lazy()` for page imports and wrapping the router configuration or individual routes in a `<Suspense>` boundary with a generic loader fallback.
+
+## 2026-06-02 - [Optimize Neo4j inserts with batched UNWIND queries]
+**Learning:** When performing batch creations/updates of related nodes (e.g., hobbies, work experiences) in Neo4j via iterative Python loops, it causes an N+1 query problem, severely increasing network roundtrips. Passing a list parameter and using Cypher's `UNWIND` aggregates all modifications into a single transaction.
+**Action:** Always favor Cypher `UNWIND` operations passing array parameters over iterative Python-level queries to insert or update multiple related nodes efficiently.
