@@ -70,22 +70,20 @@ class PersonRepository:
                     MERGE (p)-[:LIVES_IN]->(ct)
                 """, pais=pais_residencia, ciudad=ciudad_residencia)
 
-            for h in hobbies:
-                relate("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active, categoria: $categoria, descripcion: $descripcion}]->(x)",
-                       nombre=h['nombre'], active=h.get('active', True), categoria=h.get('categoria'), descripcion=h.get('descripcion'))
+            if hobbies:
+                relate("MATCH (p:Person {id: $pid}) UNWIND $hobbies AS h MERGE (x:Hobby {nombre: h.nombre}) MERGE (p)-[:ENJOYS {active: coalesce(h.active, true), categoria: h.categoria, descripcion: h.descripcion}]->(x)", hobbies=hobbies)
 
-            for l in idiomas:
-                relate("MATCH (p:Person {id: $pid}) MERGE (x:Language {nombre: $nombre}) MERGE (p)-[:SPEAKS {nivel: $nivel}]->(x)",
-                       nombre=l['nombre'], nivel=l.get('nivel'))
+            if idiomas:
+                relate("MATCH (p:Person {id: $pid}) UNWIND $idiomas AS l MERGE (x:Language {nombre: l.nombre}) MERGE (p)-[:SPEAKS {nivel: l.nivel}]->(x)", idiomas=idiomas)
 
-            for j in historial_trabajos:
-                relate("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta, actual: $actual, modalidad: $modalidad, descripcion: $descripcion, industria: $industria}]->(c)", **j)
+            if historial_trabajos:
+                relate("MATCH (p:Person {id: $pid}) UNWIND $trabajos AS j MERGE (c:Company {nombre: j.empresa}) CREATE (p)-[:WORKED_AT {cargo: j.cargo, desde: j.desde, hasta: j.hasta, actual: coalesce(j.actual, false), modalidad: j.modalidad, descripcion: j.descripcion, industria: j.industria}]->(c)", trabajos=historial_trabajos)
 
-            for e in educacion:
-                relate("MATCH (p:Person {id: $pid}) MERGE (i:Institution {nombre: $institucion}) CREATE (p)-[:STUDIED_AT {titulo: $titulo, area: $area, desde: $desde, hasta: $hasta, actual: $actual}]->(i)", **e)
+            if educacion:
+                relate("MATCH (p:Person {id: $pid}) UNWIND $edu AS e MERGE (i:Institution {nombre: e.institucion}) CREATE (p)-[:STUDIED_AT {titulo: e.titulo, area: e.area, desde: e.desde, hasta: e.hasta, actual: coalesce(e.actual, false)}]->(i)", edu=educacion)
 
-            for g in metas:
-                relate("MATCH (p:Person {id: $pid}) CREATE (x:Goal {tipo: $tipo, descripcion: $descripcion, desde: $desde, hasta: $hasta, estado: $estado}) CREATE (p)-[:HAS_GOAL]->(x)", **g)
+            if metas:
+                relate("MATCH (p:Person {id: $pid}) UNWIND $metas AS g CREATE (x:Goal {tipo: g.tipo, descripcion: g.descripcion, desde: g.desde, hasta: g.hasta, estado: g.estado}) CREATE (p)-[:HAS_GOAL]->(x)", metas=metas)
 
             if tatuajes and tatuajes.get('tiene_tatuajes'):
                 relate("MATCH (p:Person {id: $pid}) CREATE (x:Tattoo {descripcion: $descripcion, estilo: $estilo, significado: $significado, cantidad: $cantidad}) CREATE (p)-[:HAS_TATTOO]->(x)", **tatuajes)
@@ -177,15 +175,13 @@ class PersonRepository:
             # (In production we'd do incremental updates)
             if hobbies is not None:
                 session.run("MATCH (p:Person {id: $pid})-[r:ENJOYS]->() DELETE r", pid=person_id)
-                for h in hobbies:
-                    session.run("MATCH (p:Person {id: $pid}) MERGE (x:Hobby {nombre: $nombre}) MERGE (p)-[:ENJOYS {active: $active}]->(x)",
-                                pid=person_id, nombre=h['nombre'], active=h.get('active', True))
+                if hobbies:
+                    session.run("MATCH (p:Person {id: $pid}) UNWIND $hobbies AS h MERGE (x:Hobby {nombre: h.nombre}) MERGE (p)-[:ENJOYS {active: coalesce(h.active, true)}]->(x)", pid=person_id, hobbies=hobbies)
 
             if historial_trabajos is not None:
                 session.run("MATCH (p:Person {id: $pid})-[r:WORKED_AT]->() DELETE r", pid=person_id)
-                for j in historial_trabajos:
-                    session.run("MATCH (p:Person {id: $pid}) MERGE (c:Company {nombre: $empresa}) CREATE (p)-[:WORKED_AT {cargo: $cargo, desde: $desde, hasta: $hasta}]->(c)",
-                                pid=person_id, **j)
+                if historial_trabajos:
+                    session.run("MATCH (p:Person {id: $pid}) UNWIND $trabajos AS j MERGE (c:Company {nombre: j.empresa}) CREATE (p)-[:WORKED_AT {cargo: j.cargo, desde: j.desde, hasta: j.hasta}]->(c)", pid=person_id, trabajos=historial_trabajos)
 
             return self.get_by_id(person_id)
 
