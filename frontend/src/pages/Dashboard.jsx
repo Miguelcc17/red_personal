@@ -35,8 +35,8 @@ const Dashboard = () => {
     { label: 'Nodos en Grafo', value: graphData.nodes.length, icon: <Network className="text-purple-500" /> },
   ], [persons.length, relationships.length, graphData.nodes.length]);
 
-  // ⚡ Bolt: Memoize recent persons to avoid slicing on every render
-  const recentPersons = useMemo(() => persons.slice(0, 5), [persons]);
+  // ⚡ Bolt: Removed unnecessary useMemo for simple array slicing to avoid hook overhead
+  const recentPersons = persons.slice(0, 5);
 
   // ⚡ Bolt: Memoize the rendered elements to prevent mapping array on every render
   const renderedStats = useMemo(() => (
