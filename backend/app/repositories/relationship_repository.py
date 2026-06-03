@@ -100,16 +100,11 @@ class RelationshipRepository:
         if 'bitacora' in data and data['bitacora']:
             data['bitacora'] = json.dumps(data['bitacora'])
 
-        set_parts = []
-        for key in data.keys():
-            if key != 'id':
-                set_parts.append(f"r.{key} = ${key}")
-        set_clause = ", ".join(set_parts)
-
         with self.conn.get_session() as session:
+            props_to_set = {k: v for k, v in data.items() if k != 'id'}
             result = session.run(
-                f"MATCH (p1:Person)-[r:RELATED_TO {{id: $id}}]->(p2:Person) SET {set_clause} RETURN r, p1.id AS p1_id, p2.id AS p2_id",
-                **data
+                "MATCH (p1:Person)-[r:RELATED_TO {id: $id}]->(p2:Person) SET r += $props RETURN r, p1.id AS p1_id, p2.id AS p2_id",
+                id=rel_id, props=props_to_set
             )
             record = result.single()
             if record:
