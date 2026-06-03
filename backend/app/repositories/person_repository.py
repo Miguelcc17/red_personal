@@ -168,8 +168,8 @@ class PersonRepository:
             props_to_set = {k: v for k, v in data.items() if not isinstance(v, (list, dict)) or k == 'especializacion' or k == 'soft_skills' or k == 'valores_fundamentales' or k == 'motivadores' or k == 'colores_favoritos'}
 
             if props_to_set:
-                set_clause = ", ".join([f"p.{k} = ${k}" for k in props_to_set.keys() if k != 'id'])
-                session.run(f"MATCH (p:Person {{id: $id}}) SET {set_clause}", **props_to_set)
+                props_to_set.pop('id', None)
+                session.run("MATCH (p:Person {id: $id}) SET p += $props", id=person_id, props=props_to_set)
 
             # 2. For complex relationships, simplest strategy is DETACH old and RECREATE
             # (In production we'd do incremental updates)

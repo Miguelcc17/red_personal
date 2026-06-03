@@ -35,18 +35,17 @@ const Dashboard = () => {
     { label: 'Nodos en Grafo', value: graphData.nodes.length, icon: <Network className="text-purple-500" /> },
   ], [persons.length, relationships.length, graphData.nodes.length]);
 
-  // ⚡ Bolt: Removed unnecessary useMemo for simple array slicing to avoid hook overhead
-  const recentPersons = persons.slice(0, 5);
-
   // ⚡ Bolt: Memoize the rendered elements to prevent mapping array on every render
   const renderedStats = useMemo(() => (
     stats.map((stat, i) => <StatCard key={i} stat={stat} />)
   ), [stats]);
 
-  // ⚡ Bolt: Memoize the rendered elements to prevent mapping array on every render
+  // ⚡ Bolt: Memoize the rendered elements using the stable 'persons' array as dependency.
+  // Using an inline slice directly in the dependency array or component body breaks memoization
+  // because .slice() returns a new array reference on every render.
   const renderedRecentPersons = useMemo(() => (
-    recentPersons.map(p => <RecentPersonCard key={p.id} person={p} />)
-  ), [recentPersons]);
+    persons.slice(0, 5).map(p => <RecentPersonCard key={p.id} person={p} />)
+  ), [persons]);
 
   if (pLoading || rLoading || gLoading) return <PageContainer title="Dashboard"><Loader /></PageContainer>;
 

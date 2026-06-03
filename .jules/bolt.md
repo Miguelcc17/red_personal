@@ -85,3 +85,10 @@
 ## 2024-06-25 - Prevent useMemo on small array slicing
 **Learning:** Using `useMemo` for simple operations like `persons.slice(0, 5)` introduces more overhead than the slicing operation itself, resulting in a micro-optimization with no measurable impact.
 **Action:** Do not use `useMemo` for simple operations like small array slicing unless there is a proven performance bottleneck.
+## YYYY-MM-DD - [Optimize Cypher Query Compilation]
+**Learning:** Building dynamic SET clauses (`SET p.key = $key, p.key2 = $key2`) in Cypher queries causes Neo4j to generate unique query strings for different property combinations. This defeats query plan caching, causing unnecessary query recompilation overhead for every update.
+**Action:** Use the `SET p += $props` syntax to allow Neo4j to compile and cache a single execution plan that works regardless of which properties are being updated.
+
+## YYYY-MM-DD - [Broken useMemo Dependency with Array Slicing]
+**Learning:** Using an inline array slice (`const recentPersons = persons.slice(0, 5)`) as a dependency in a `useMemo` hook completely breaks memoization. `.slice()` returns a new array reference on every render, causing the shallow equality check to always fail and forcing a re-render of the mapped elements anyway.
+**Action:** Always slice the array inside the `useMemo` callback and use the stable parent array as the dependency (e.g., `[persons]`).
