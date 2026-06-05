@@ -92,3 +92,6 @@
 ## YYYY-MM-DD - [Broken useMemo Dependency with Array Slicing]
 **Learning:** Using an inline array slice (`const recentPersons = persons.slice(0, 5)`) as a dependency in a `useMemo` hook completely breaks memoization. `.slice()` returns a new array reference on every render, causing the shallow equality check to always fail and forcing a re-render of the mapped elements anyway.
 **Action:** Always slice the array inside the `useMemo` callback and use the stable parent array as the dependency (e.g., `[persons]`).
+## 2026-06-05 - [Optimize Cypher Query Compilation]
+**Learning:** Building dynamic SET clauses (`SET p.key = $key, p.key2 = $key2`) or dynamic CREATE queries with inline concatenated property strings (`CREATE (p:Person {key: $key...})`) causes Neo4j to generate unique query strings for different property combinations. This defeats query plan caching, causing unnecessary query recompilation overhead for every update or creation with different fields.
+**Action:** Use the `SET p += $props` syntax (e.g. `CREATE (p:Person) SET p += $props`) to allow Neo4j to compile and cache a single execution plan that works regardless of which properties are being inserted or updated.

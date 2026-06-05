@@ -39,8 +39,9 @@ class PersonRepository:
 
         with self.conn.get_session() as session:
             # 1. Create Person node
-            props = ", ".join([f"{k}: ${k}" for k in data.keys()])
-            result = session.run(f"CREATE (p:Person {{ {props} }}) RETURN p", **data)
+            # ⚡ Bolt: Prevent query recompilation and cache misses by using SET p += $props
+            # instead of dynamic string concatenation for properties.
+            result = session.run("CREATE (p:Person) SET p += $props RETURN p", props=data)
             person_id = result.single()['p']['id']
 
             # Helper for merging and relating
