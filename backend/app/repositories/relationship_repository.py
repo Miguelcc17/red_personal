@@ -29,24 +29,16 @@ class RelationshipRepository:
             data['bitacora'] = json.dumps([])
 
         with self.conn.get_session() as session:
+            # ⚡ Bolt: Prevent query recompilation and cache misses by using SET r += $props
+            # instead of dynamic string concatenation or explicit properties in CREATE.
             result = session.run(
                 """
                 MATCH (p1:Person {id: $p1_id}), (p2:Person {id: $p2_id})
-                CREATE (p1)-[r:RELATED_TO {
-                    id: $id,
-                    tipo_relacion: $tipo_relacion,
-                    descripcion: $descripcion,
-                    nivel_confianza: $nivel_confianza,
-                    desde: $desde,
-                    hasta: $hasta,
-                    estado: $estado,
-                    bitacora: $bitacora,
-                    created_at: $created_at,
-                    updated_at: $updated_at
-                }]->(p2)
+                CREATE (p1)-[r:RELATED_TO]->(p2)
+                SET r += $props
                 RETURN r, p1.id AS p1_id, p2.id AS p2_id
                 """,
-                p1_id=p1_id, p2_id=p2_id, **data
+                p1_id=p1_id, p2_id=p2_id, props=data
             )
             record = result.single()
             if record:

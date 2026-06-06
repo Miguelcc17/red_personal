@@ -95,3 +95,6 @@
 ## 2026-06-05 - [Optimize Cypher Query Compilation]
 **Learning:** Building dynamic SET clauses (`SET p.key = $key, p.key2 = $key2`) or dynamic CREATE queries with inline concatenated property strings (`CREATE (p:Person {key: $key...})`) causes Neo4j to generate unique query strings for different property combinations. This defeats query plan caching, causing unnecessary query recompilation overhead for every update or creation with different fields.
 **Action:** Use the `SET p += $props` syntax (e.g. `CREATE (p:Person) SET p += $props`) to allow Neo4j to compile and cache a single execution plan that works regardless of which properties are being inserted or updated.
+## 2024-06-25 - [Optimize Cypher Query Compilation in RelationshipRepository]
+**Learning:** Hardcoding properties within the `{}` map of a `CREATE` clause in Cypher (e.g., `CREATE (p1)-[r:RELATED_TO { id: $id, tipo_relacion: $tipo_relacion, ... }]->(p2)`) bypasses query plan caching for dynamic properties and requires manually listing all fields.
+**Action:** Use the `SET r += $props` syntax immediately following a generic `CREATE` or `MERGE` clause to pass an entire property dictionary as a parameter (`props=data`). This allows Neo4j to compile and cache a single execution plan regardless of which exact properties are included.
