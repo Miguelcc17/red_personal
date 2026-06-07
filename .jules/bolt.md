@@ -98,3 +98,6 @@
 ## 2024-06-25 - [Optimize Cypher Query Compilation in RelationshipRepository]
 **Learning:** Hardcoding properties within the `{}` map of a `CREATE` clause in Cypher (e.g., `CREATE (p1)-[r:RELATED_TO { id: $id, tipo_relacion: $tipo_relacion, ... }]->(p2)`) bypasses query plan caching for dynamic properties and requires manually listing all fields.
 **Action:** Use the `SET r += $props` syntax immediately following a generic `CREATE` or `MERGE` clause to pass an entire property dictionary as a parameter (`props=data`). This allows Neo4j to compile and cache a single execution plan regardless of which exact properties are included.
+## 2024-05-24 - [Database Indexes for MERGE Operations]
+**Learning:** In Neo4j, running `MERGE` on a node based on a specific property (e.g. `MERGE (n:Profession {nombre: $nombre})`) without an explicit index on that property causes an O(N) full label scan for every execution. This creates a severe write performance bottleneck as the graph grows.
+**Action:** Always ensure `CREATE INDEX IF NOT EXISTS FOR (n:Label) ON (n.property)` is executed during application startup for any label/property combination frequently used in `MERGE` or `MATCH` lookups to optimize them to O(log N).

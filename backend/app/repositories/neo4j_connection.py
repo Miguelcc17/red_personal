@@ -27,6 +27,11 @@ class Neo4jConnection:
                     with self.driver.session() as session:
                         session.run("CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.id)")
                         session.run("CREATE INDEX IF NOT EXISTS FOR ()-[r:RELATED_TO]-() ON (r.id)")
+
+                        # ⚡ Bolt: Add indexes for properties frequently used in MERGE operations
+                        # This prevents O(N) full graph scans and changes them to O(log N) lookups
+                        for label in ['Gender', 'Profession', 'Country', 'City', 'Hobby', 'Language', 'Company', 'Institution']:
+                            session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON (n.nombre)")
                 except Exception as index_e:
                     logger.warning(f"Failed to create indexes: {index_e}")
 
