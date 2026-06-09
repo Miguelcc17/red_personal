@@ -6,36 +6,33 @@ import { Home, Users, Share2, Network, Box } from 'lucide-react';
 // when parent pages (like Network2DPage or Network3DPage) update their local state
 // (e.g., when a user clicks a node/link). Since Navbar does not accept `children` props
 // and only depends on route location, `React.memo` effectively blocks top-down re-renders.
+const navItems = [
+  { path: '/', label: 'Dashboard', icon: <Home size={22} /> },
+  { path: '/persons', label: 'Individuos', icon: <Users size={22} /> },
+  { path: '/relationships', label: 'Conexiones', icon: <Share2 size={22} /> },
+  { path: '/network-2d', label: 'Mapa 2D', icon: <Network size={22} /> },
+  { path: '/network-3d', label: 'Red 3D', icon: <Box size={22} /> },
+];
+
 const Navbar = React.memo(() => {
   const location = useLocation();
 
-  const navItems = React.useMemo(() => [
-    { path: '/', label: 'Dashboard', icon: <Home size={22} /> },
-    { path: '/persons', label: 'Individuos', icon: <Users size={22} /> },
-    { path: '/relationships', label: 'Conexiones', icon: <Share2 size={22} /> },
-    { path: '/network-2d', label: 'Mapa 2D', icon: <Network size={22} /> },
-    { path: '/network-3d', label: 'Red 3D', icon: <Box size={22} /> },
-  ], []);
-
-  // ⚡ Bolt: Memoize the mapped links to prevent creating elements if route hasn't changed.
-  const renderedLinks = React.useMemo(() => (
-    navItems.map((item) => (
-      <Link
-        key={item.path}
-        to={item.path}
-        className={`flex items-center space-x-4 px-6 py-4 rounded-2xl transition-all duration-300 font-bold group ${
-          location.pathname === item.path
-            ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20'
-            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-        }`}
-      >
-        <div className={`${location.pathname === item.path ? 'text-white' : 'text-indigo-500 group-hover:text-indigo-400'} transition-colors`}>
-          {item.icon}
-        </div>
-        <span className="text-sm uppercase tracking-widest">{item.label}</span>
-      </Link>
-    ))
-  ), [navItems, location.pathname]);
+  const renderedLinks = navItems.map((item) => (
+    <Link
+      key={item.path}
+      to={item.path}
+      className={`flex items-center space-x-4 px-6 py-4 rounded-2xl transition-all duration-300 font-bold group ${
+        location.pathname === item.path
+          ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20'
+          : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+      }`}
+    >
+      <div className={`${location.pathname === item.path ? 'text-white' : 'text-indigo-500 group-hover:text-indigo-400'} transition-colors`}>
+        {item.icon}
+      </div>
+      <span className="text-sm uppercase tracking-widest">{item.label}</span>
+    </Link>
+  ));
 
   return (
     <nav className="bg-slate-900 text-white h-screen w-72 fixed left-0 top-0 flex flex-col shadow-2xl z-50 border-r border-slate-800">

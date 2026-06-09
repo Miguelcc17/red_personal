@@ -101,3 +101,6 @@
 ## 2024-05-24 - [Database Indexes for MERGE Operations]
 **Learning:** In Neo4j, running `MERGE` on a node based on a specific property (e.g. `MERGE (n:Profession {nombre: $nombre})`) without an explicit index on that property causes an O(N) full label scan for every execution. This creates a severe write performance bottleneck as the graph grows.
 **Action:** Always ensure `CREATE INDEX IF NOT EXISTS FOR (n:Label) ON (n.property)` is executed during application startup for any label/property combination frequently used in `MERGE` or `MATCH` lookups to optimize them to O(log N).
+## 2024-06-25 - Prevent useMemo on small arrays and mappings
+**Learning:** Using `useMemo` for simple mapping operations on tiny arrays (like `[1, 2, 3].map(...)`) or small sliced arrays (like `persons.slice(0, 5).map(...)`) introduces more overhead (dependency tracking, hook memory allocation) than the inline evaluation itself, resulting in an anti-pattern.
+**Action:** Do not use `useMemo` for simple operations on small arrays. If the array is purely static, move it completely outside the React component to prevent it from being recreated on every render.

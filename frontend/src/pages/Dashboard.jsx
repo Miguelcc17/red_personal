@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '../components/layout/PageContainer';
 import { usePersons } from '../hooks/usePersons';
@@ -28,24 +28,15 @@ const Dashboard = () => {
     }
   };
 
-  // ⚡ Bolt: Memoize stats to avoid recreating the array and elements on every render
-  const stats = useMemo(() => [
+  const stats = [
     { label: 'Personas en Red', value: persons.length, icon: <Users className="text-blue-500" /> },
     { label: 'Relaciones Totales', value: relationships.length, icon: <Share2 className="text-green-500" /> },
     { label: 'Nodos en Grafo', value: graphData.nodes.length, icon: <Network className="text-purple-500" /> },
-  ], [persons.length, relationships.length, graphData.nodes.length]);
+  ];
 
-  // ⚡ Bolt: Memoize the rendered elements to prevent mapping array on every render
-  const renderedStats = useMemo(() => (
-    stats.map((stat, i) => <StatCard key={i} stat={stat} />)
-  ), [stats]);
+  const renderedStats = stats.map((stat, i) => <StatCard key={i} stat={stat} />);
 
-  // ⚡ Bolt: Memoize the rendered elements using the stable 'persons' array as dependency.
-  // Using an inline slice directly in the dependency array or component body breaks memoization
-  // because .slice() returns a new array reference on every render.
-  const renderedRecentPersons = useMemo(() => (
-    persons.slice(0, 5).map(p => <RecentPersonCard key={p.id} person={p} />)
-  ), [persons]);
+  const renderedRecentPersons = persons.slice(0, 5).map(p => <RecentPersonCard key={p.id} person={p} />);
 
   if (pLoading || rLoading || gLoading) return <PageContainer title="Dashboard"><Loader /></PageContainer>;
 
