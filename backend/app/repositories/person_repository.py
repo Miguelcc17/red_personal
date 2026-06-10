@@ -188,5 +188,13 @@ class PersonRepository:
 
     def delete(self, person_id):
         with self.conn.get_session() as session:
-            session.run("MATCH (p:Person {id: $pid}) OPTIONAL MATCH (p)-[:HAS_GOAL]->(g:Goal) OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t:Tattoo) DETACH DELETE p, g, t", pid=person_id)
+            # ⚡ Bolt: Prevent Cartesian product explosions while keeping the operation atomic.
+            # Using independent CALL {} subqueries for cascading deletes avoids O(M*P) complexity
+            # from consecutive OPTIONAL MATCH clauses while preventing the network overhead of multiple session.run() calls.
+            session.run("""
+            MATCH (p:Person {id: $pid})
+            CALL { WITH p OPTIONAL MATCH (p)-[:HAS_GOAL]->(g:Goal) DETACH DELETE g }
+            CALL { WITH p OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t:Tattoo) DETACH DELETE t }
+            DETACH DELETE p
+            """, pid=person_id)
             return True
