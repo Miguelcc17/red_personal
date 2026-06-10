@@ -26,6 +26,8 @@ class Neo4jConnection:
                 try:
                     with self.driver.session() as session:
                         session.run("CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.id)")
+                        # ⚡ Bolt: Add index for sorting to prevent O(N log N) in-memory sort during get_all
+                        session.run("CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.nombre)")
                         session.run("CREATE INDEX IF NOT EXISTS FOR ()-[r:RELATED_TO]-() ON (r.id)")
 
                         # ⚡ Bolt: Add indexes for properties frequently used in MERGE operations
