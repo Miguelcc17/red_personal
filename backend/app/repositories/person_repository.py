@@ -186,7 +186,7 @@ class PersonRepository:
 
             return self.get_by_id(person_id)
 
-    def delete(self, person_id):
+   def delete(self, person_id):
         with self.conn.get_session() as session:
             # ⚡ Bolt: Prevent Cartesian product explosion without breaking transaction atomicity.
             # We use a single query with subqueries instead of multiple `session.run` calls
