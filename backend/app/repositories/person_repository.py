@@ -186,15 +186,16 @@ class PersonRepository:
 
             return self.get_by_id(person_id)
 
-    def delete(self, person_id):
+   def delete(self, person_id):
         with self.conn.get_session() as session:
-            # ⚡ Bolt: Prevent Cartesian product explosions while keeping the operation atomic.
-            # Using independent CALL {} subqueries for cascading deletes avoids O(M*P) complexity
-            # from consecutive OPTIONAL MATCH clauses while preventing the network overhead of multiple session.run() calls.
-            session.run("""
+            # ⚡ Bolt: Prevent Cartesian product explosion without breaking transaction atomicity.
+            # We use a single query with subqueries instead of multiple `session.run` calls
+            # to guarantee a single ACID transaction and minimize network round-trips.
+            query = """
             MATCH (p:Person {id: $pid})
             CALL { WITH p OPTIONAL MATCH (p)-[:HAS_GOAL]->(g:Goal) DETACH DELETE g }
             CALL { WITH p OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t:Tattoo) DETACH DELETE t }
             DETACH DELETE p
-            """, pid=person_id)
+            """
+            session.run(query, pid=person_id)
             return True

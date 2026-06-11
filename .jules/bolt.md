@@ -101,6 +101,17 @@
 ## 2024-05-24 - [Database Indexes for MERGE Operations]
 **Learning:** In Neo4j, running `MERGE` on a node based on a specific property (e.g. `MERGE (n:Profession {nombre: $nombre})`) without an explicit index on that property causes an O(N) full label scan for every execution. This creates a severe write performance bottleneck as the graph grows.
 **Action:** Always ensure `CREATE INDEX IF NOT EXISTS FOR (n:Label) ON (n.property)` is executed during application startup for any label/property combination frequently used in `MERGE` or `MATCH` lookups to optimize them to O(log N).
+## 2024-05-25 - [Optimize Neo4j Retrieve Queries with Database Indexes]
+**Learning:** Found an application-specific bottleneck in `PersonRepository.get_all` where the query sorted the result using `ORDER BY p.nombre ASC`. Without a specific database index on `Person.nombre`, Neo4j was forced to perform an expensive O(N log N) in-memory sort operation for every full retrieval query.
+**Action:** Add `CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.nombre)` during application startup to optimize the Cypher `ORDER BY` clause, allowing it to leverage the O(log N) database index for efficient streaming retrieval.
+
+## 2024-05-25 - [Fix Cartesian Product Explosions in Neo4j Delete Queries]
+**Learning:** Found an application-specific bottleneck in `PersonRepository.delete` where cascading deletes were implemented using chained `OPTIONAL MATCH` clauses (e.g., `OPTIONAL MATCH (p)-[:HAS_GOAL]->(g) OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t) DETACH DELETE p, g, t`). This creates an unnecessary O(N*M) Cartesian product explosion if a node has multiple connected nodes across these labels before performing the deletion.
+**Action:** Split chained `OPTIONAL MATCH` clauses used for cascading deletes into distinct, separate Cypher statements (e.g., `MATCH (p)-[:HAS_GOAL]->(g) DETACH DELETE g` followed by `MATCH (p)-[:HAS_TATTOO]->(t) DETACH DELETE t`). This ensures safe, linear O(N+M) deletion time.
+
+## 2024-05-25 - [Maintain Transaction Atomicity in Neo4j Cascading Deletes]
+**Learning:** Found an application-specific issue where attempting to fix a Cartesian product explosion by splitting a single Neo4j query into multiple sequential `session.run()` calls broke transaction atomicity. Because the Python driver auto-commits each `session.run()`, a failure midway leaves the database in an inconsistent state (e.g., deleted related nodes but left an orphaned primary node) and increases network round-trip overhead.
+**Action:** When fixing Cartesian product explosions in Neo4j updates or deletes, use a single Cypher query with independent `CALL {}` subqueries (e.g., `MATCH (p) CALL { WITH p OPTIONAL MATCH (p)-[:REL]->(n) DETACH DELETE n } DETACH DELETE p`) instead of multiple `session.run()` calls. This ensures the entire operation is executed as a single ACID transaction while maintaining linear O(N+M) performance.
 ## 2024-06-25 - Prevent useMemo on small arrays and mappings
 **Learning:** Using `useMemo` for simple mapping operations on tiny arrays (like `[1, 2, 3].map(...)`) or small sliced arrays (like `persons.slice(0, 5).map(...)`) introduces more overhead (dependency tracking, hook memory allocation) than the inline evaluation itself, resulting in an anti-pattern.
 **Action:** Do not use `useMemo` for simple operations on small arrays. If the array is purely static, move it completely outside the React component to prevent it from being recreated on every render.
