@@ -118,3 +118,7 @@
 ## 2026-06-10 - [Atomic Cartesian Product Fix with Neo4j CALL Subqueries]
 **Learning:** Found an application-specific bottleneck in `PersonRepository.delete` where cascading deletes were performed using consecutive `OPTIONAL MATCH` clauses (`OPTIONAL MATCH (p)-[:HAS_GOAL]->(g) OPTIONAL MATCH (p)-[:HAS_TATTOO]->(t) DETACH DELETE p, g, t`). This causes Neo4j to build a massive in-memory Cartesian product (e.g. every goal matched with every tattoo) before deleting, leading to `O(M*N)` complexity and severe performance/memory issues on complex nodes.
 **Action:** To maintain transaction atomicity and prevent Cartesian products, replace consecutive `OPTIONAL MATCH` clauses in delete operations with independent `CALL {}` subqueries (e.g. `CALL { WITH p OPTIONAL MATCH (p)-[:HAS_GOAL]->(g) DETACH DELETE g }`). This ensures `O(M+N)` linear execution time while keeping the operation within a single atomic `session.run()` call to prevent network overhead.
+
+## 2024-06-11 - [Dashboard Array Operations Memoization]
+**Learning:** Using `slice()` inline with mapping operations (e.g., `persons.slice(0, 5).map(...)`) returns a new array reference on every render, defeating the purpose of downstream pure components (like `React.memo` wrapping child components).
+**Action:** Always wrap `slice` and `map` operations in `useMemo` when rendering lists of elements inside parent components to prevent triggering unnecessary O(N) re-renders, especially when these components depend on stable data.
