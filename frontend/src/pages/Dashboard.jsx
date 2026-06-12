@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '../components/layout/PageContainer';
 import { usePersons } from '../hooks/usePersons';
@@ -28,15 +28,20 @@ const Dashboard = () => {
     }
   };
 
-  const stats = [
-    { label: 'Personas en Red', value: persons.length, icon: <Users className="text-blue-500" /> },
-    { label: 'Relaciones Totales', value: relationships.length, icon: <Share2 className="text-green-500" /> },
-    { label: 'Nodos en Grafo', value: graphData.nodes.length, icon: <Network className="text-purple-500" /> },
-  ];
+  // ⚡ Bolt: Memoize stats and recent persons to avoid recreation and O(N) re-renders
+  // on every render of Dashboard, particularly since slice() returns a new reference.
+  const renderedStats = useMemo(() => {
+    const stats = [
+      { label: 'Personas en Red', value: persons.length, icon: <Users className="text-blue-500" /> },
+      { label: 'Relaciones Totales', value: relationships.length, icon: <Share2 className="text-green-500" /> },
+      { label: 'Nodos en Grafo', value: graphData.nodes.length, icon: <Network className="text-purple-500" /> },
+    ];
+    return stats.map((stat, i) => <StatCard key={i} stat={stat} />);
+  }, [persons.length, relationships.length, graphData.nodes.length]);
 
-  const renderedStats = stats.map((stat, i) => <StatCard key={i} stat={stat} />);
-
-  const renderedRecentPersons = persons.slice(0, 5).map(p => <RecentPersonCard key={p.id} person={p} />);
+  const renderedRecentPersons = useMemo(() => {
+    return persons.slice(0, 5).map(p => <RecentPersonCard key={p.id} person={p} />);
+  }, [persons]);
 
   if (pLoading || rLoading || gLoading) return <PageContainer title="Dashboard"><Loader /></PageContainer>;
 
