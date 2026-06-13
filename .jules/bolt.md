@@ -125,3 +125,7 @@
 ## 2024-06-25 - [Removed Anti-Pattern Memoization of Inline Array Mapping]
 **Learning:** Adding a `useMemo` to an inline mapping operation over a sliced slice (e.g. `const stats = useMemo(() => array.slice().map(...), [array])`) or a tiny static array is an anti-pattern. While it may look like an optimization, it's a micro-optimization where the cost of the `useMemo` dependency check and allocation adds more overhead than the inline map itself, yielding negative or zero performance benefit.
 **Action:** Remove `useMemo` around rendering logic for simple derived values or tiny lists, evaluating them inline instead to eliminate unnecessary hook overhead and simplify the code. If an array is static, move it out of the component entirely.
+
+## 2024-05-10 - Replace inline array iteration with Set lookup
+**Learning:** Found an application-specific bottleneck in the frontend: `NodeDetailsPanel.jsx` used an inline array `['id', 'created_at', 'updated_at'].includes(key)` inside an `Object.entries(props).map` loop. This caused an O(N) array allocation on every iteration and an O(M) lookup, compounding rendering overhead for panels displaying nodes with many properties.
+**Action:** Extract inline exclusion arrays into a constant `Set` outside the component (e.g., `const EXCLUDED_PROPS = new Set([...])`) and use `EXCLUDED_PROPS.has(key)` to replace the O(N) allocation and O(M) lookup with a single static O(1) hash map lookup.
