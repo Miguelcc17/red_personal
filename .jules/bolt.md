@@ -122,6 +122,9 @@
 ## 2024-06-11 - [Dashboard Array Operations Memoization]
 **Learning:** Using `slice()` inline with mapping operations (e.g., `persons.slice(0, 5).map(...)`) returns a new array reference on every render, defeating the purpose of downstream pure components (like `React.memo` wrapping child components).
 **Action:** Always wrap `slice` and `map` operations in `useMemo` when rendering lists of elements inside parent components to prevent triggering unnecessary O(N) re-renders, especially when these components depend on stable data.
+## 2024-06-25 - [Removed Anti-Pattern Memoization of Inline Array Mapping]
+**Learning:** Adding a `useMemo` to an inline mapping operation over a sliced slice (e.g. `const stats = useMemo(() => array.slice().map(...), [array])`) or a tiny static array is an anti-pattern. While it may look like an optimization, it's a micro-optimization where the cost of the `useMemo` dependency check and allocation adds more overhead than the inline map itself, yielding negative or zero performance benefit.
+**Action:** Remove `useMemo` around rendering logic for simple derived values or tiny lists, evaluating them inline instead to eliminate unnecessary hook overhead and simplify the code. If an array is static, move it out of the component entirely.
 
 ## 2024-05-10 - Replace inline array iteration with Set lookup
 **Learning:** Found an application-specific bottleneck in the frontend: `NodeDetailsPanel.jsx` used an inline array `['id', 'created_at', 'updated_at'].includes(key)` inside an `Object.entries(props).map` loop. This caused an O(N) array allocation on every iteration and an O(M) lookup, compounding rendering overhead for panels displaying nodes with many properties.
