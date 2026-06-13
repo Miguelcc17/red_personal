@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { X, User, MapPin, Target, Star, Hash, Building, Globe, Info } from 'lucide-react';
 
+const EXCLUDED_PROPS = new Set(['id', 'created_at', 'updated_at', 'elementId']);
+
 // ⚡ Bolt: Wrap in React.memo to prevent unnecessary re-renders when parent components update
 const NodeDetailsPanel = React.memo(({ node, onClose }) => {
   if (!node) return null;
@@ -17,7 +19,7 @@ const NodeDetailsPanel = React.memo(({ node, onClose }) => {
 
   const renderedProps = useMemo(() => {
     return Object.entries(props).map(([key, value]) => {
-      if (['id', 'created_at', 'updated_at'].includes(key)) return null;
+      if (EXCLUDED_PROPS.has(key)) return null;
       return (
         <div key={key} className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 last:border-0 last:pb-0">
           <span className="font-bold text-slate-400 uppercase text-[9px] tracking-tighter">{key}</span>

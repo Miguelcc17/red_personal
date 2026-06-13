@@ -122,3 +122,7 @@
 ## 2024-06-11 - [Dashboard Array Operations Memoization]
 **Learning:** Using `slice()` inline with mapping operations (e.g., `persons.slice(0, 5).map(...)`) returns a new array reference on every render, defeating the purpose of downstream pure components (like `React.memo` wrapping child components).
 **Action:** Always wrap `slice` and `map` operations in `useMemo` when rendering lists of elements inside parent components to prevent triggering unnecessary O(N) re-renders, especially when these components depend on stable data.
+
+## 2024-05-10 - Replace inline array iteration with Set lookup
+**Learning:** Found an application-specific bottleneck in the frontend: `NodeDetailsPanel.jsx` used an inline array `['id', 'created_at', 'updated_at'].includes(key)` inside an `Object.entries(props).map` loop. This caused an O(N) array allocation on every iteration and an O(M) lookup, compounding rendering overhead for panels displaying nodes with many properties.
+**Action:** Extract inline exclusion arrays into a constant `Set` outside the component (e.g., `const EXCLUDED_PROPS = new Set([...])`) and use `EXCLUDED_PROPS.has(key)` to replace the O(N) allocation and O(M) lookup with a single static O(1) hash map lookup.
