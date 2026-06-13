@@ -35,6 +35,8 @@ const MemoSelect = React.memo(({ options, ...props }) => (
   </select>
 ));
 
+const STEP_TABS = [1, 2, 3];
+
 const ESTADO_OPTIONS = [
   { value: "activa", label: "Activa" },
   { value: "finalizada", label: "Finalizada" },
@@ -229,7 +231,7 @@ const RelationshipsPage = () => {
     ));
   }, [formData?.bitacora, handleDeleteLog]);
 
-  const renderedStepTabs = [1, 2, 3].map(s => (
+  const renderedStepTabs = STEP_TABS.map(s => (
     <div key={s} className={`flex-1 p-8 text-center font-black uppercase tracking-widest text-[10px] flex items-center justify-center space-x-3 ${step === s ? 'text-indigo-600 bg-white border-b-2 border-indigo-600' : 'text-slate-300'}`}>
       <div className={`w-8 h-8 rounded-2xl flex items-center justify-center ${step === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-200 text-slate-400'}`}>{s}</div>
       <span>{s === 1 ? 'Persona A' : s === 2 ? 'Persona B' : 'Detalles y Bitácora'}</span>
