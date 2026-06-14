@@ -129,3 +129,8 @@
 ## 2024-05-10 - Replace inline array iteration with Set lookup
 **Learning:** Found an application-specific bottleneck in the frontend: `NodeDetailsPanel.jsx` used an inline array `['id', 'created_at', 'updated_at'].includes(key)` inside an `Object.entries(props).map` loop. This caused an O(N) array allocation on every iteration and an O(M) lookup, compounding rendering overhead for panels displaying nodes with many properties.
 **Action:** Extract inline exclusion arrays into a constant `Set` outside the component (e.g., `const EXCLUDED_PROPS = new Set([...])`) and use `EXCLUDED_PROPS.has(key)` to replace the O(N) allocation and O(M) lookup with a single static O(1) hash map lookup.
+\n## 2025-01-20 - Batching Sequential Neo4j Writes\n**Learning:** In the backend , executing multiple  calls to incrementally build complex graph entities (e.g., node creation + multiple relation merges) causes severe N+1 transaction overhead and breaks atomicity. \n**Action:** Use explicit transactions () and execute all sequential database writes using  to optimize latency and guarantee ACID guarantees.
+
+## 2025-01-20 - Batching Sequential Neo4j Writes
+**Learning:** In the backend `PersonRepository`, executing multiple `session.run()` calls to incrementally build complex graph entities (e.g., node creation + multiple relation merges) causes severe N+1 transaction overhead and breaks atomicity.
+**Action:** Use explicit transactions (`with session.begin_transaction() as tx:`) and execute all sequential database writes using `tx.run()` to optimize latency and guarantee ACID guarantees.
